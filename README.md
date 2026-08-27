@@ -126,3 +126,9 @@ flutter run -d android
 ```powershell
 flutter run -d windows --dart-define=THUNDER611_GIPHY_KEY=你的GIPHY_API_KEY
 ```
+
+## V1.1.1 Chat Routing Fix
+- 私訊附件、貼圖、GIF 明確帶入 target。
+- 聊天室附件、貼圖、GIF 明確帶入 roomId。
+- openPrivate 會同步設定 active private target。
+- GIF 伺服器驗證允許 GIPHY media/i 網域。

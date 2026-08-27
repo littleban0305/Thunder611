@@ -897,7 +897,7 @@ wss.on('connection', (ws) => {
           payload = { sticker: String(event.sticker || '😂').slice(0, 20) };
         } else if (kind === 'gif') {
           const url = String(event.url || '').trim();
-          if (!/^https?:\/\/.*(?:giphy\.com|media[0-9]*\.giphy\.com)/i.test(url)) throw new Error('GIF 網址不合法');
+          if (!/^https?:\/\/(?:media(?:\d+)?|i)?\.?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
           payload = { url: url.slice(0, 1000) };
         }
         if (text.length > 500) throw new Error('訊息太長');
@@ -1012,7 +1012,7 @@ wss.on('connection', (ws) => {
           payload = { sticker: String(event.sticker || '😂').slice(0, 20) };
         } else if (kind === 'gif') {
           const url = String(event.url || '').trim();
-          if (!/^https?:\/\/.*(?:giphy\.com|media[0-9]*\.giphy\.com)/i.test(url)) throw new Error('GIF 網址不合法');
+          if (!/^https?:\/\/(?:media(?:\d+)?|i)?\.?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
           payload = { url: url.slice(0, 1000) };
         }
 

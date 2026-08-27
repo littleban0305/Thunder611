@@ -1404,6 +1404,7 @@ class ThunderAppState extends ChangeNotifier {
 
   void openPrivate(String target) {
     _activeChatRoomId = null;
+    _activePrivateTarget = target;
     privateMessages.putIfAbsent(target, () => []);
     if (realtimeConnected) {
       realtime.send({'type': 'private.history', 'target': target});
@@ -1499,88 +1500,133 @@ class ThunderAppState extends ChangeNotifier {
     }
   }
 
-  Future<void> sendMedia({required String kind, required String dataBase64, required String ext, String caption = ''}) async {
-    final url = await _uploadMedia(kind: kind, dataBase64: dataBase64, ext: ext);
-    if (url == null) return;
+  Future<void> sendMedia({
+    required String kind,
+    required String dataBase64,
+    required String ext,
+    String caption = '',
+    String? target,
+    String? roomId,
+  }) async {
+    final url = await _uploadMedia(
+      kind: kind,
+      dataBase64: dataBase64,
+      ext: ext,
+    );
+    if (url == null || !realtimeConnected) return;
+
     final clientId = _clientId();
-    if (_activePrivateTarget != null) {
+    final privateTarget = target ?? _activePrivateTarget;
+    final channelRoomId = roomId ?? _activeChatRoomId;
+
+    if (privateTarget != null && privateTarget.isNotEmpty) {
       realtime.send({
         'type': 'private.send',
-        'target': _activePrivateTarget,
+        'target': privateTarget,
         'kind': kind,
         'url': url,
         'text': caption,
         'clientId': clientId,
       });
-    } else if (_activeChatRoomId != null) {
+      return;
+    }
+
+    if (channelRoomId != null && channelRoomId.isNotEmpty) {
       realtime.send({
         'type': 'chat.room.send',
-        'roomId': _activeChatRoomId,
+        'roomId': channelRoomId,
         'kind': kind,
         'url': url,
         'text': caption,
         'clientId': clientId,
       });
-    } else {
-      realtime.send({
-        'type': 'chat.send',
-        'kind': kind,
-        'url': url,
-        'text': caption,
-        'clientId': clientId,
-      });
+      return;
     }
+
+    realtime.send({
+      'type': 'chat.send',
+      'kind': kind,
+      'url': url,
+      'text': caption,
+      'clientId': clientId,
+    });
   }
 
-  void sendSticker(String sticker) {
+  void sendSticker(String sticker, {String? target, String? roomId}) {
     if (!realtimeConnected) return;
     final clean = sticker.trim();
     if (clean.isEmpty) return;
-    if (_activePrivateTarget != null) {
+
+    final privateTarget = target ?? _activePrivateTarget;
+    final channelRoomId = roomId ?? _activeChatRoomId;
+    final clientId = _clientId();
+
+    if (privateTarget != null && privateTarget.isNotEmpty) {
       realtime.send({
         'type': 'private.send',
-        'target': _activePrivateTarget,
+        'target': privateTarget,
         'kind': 'sticker',
         'sticker': clean,
         'text': '',
-        'clientId': _clientId(),
+        'clientId': clientId,
       });
-    } else if (_activeChatRoomId != null) {
+      return;
+    }
+
+    if (channelRoomId != null && channelRoomId.isNotEmpty) {
       realtime.send({
         'type': 'chat.room.send',
-        'roomId': _activeChatRoomId,
+        'roomId': channelRoomId,
         'kind': 'sticker',
         'sticker': clean,
         'text': '',
-        'clientId': _clientId(),
+        'clientId': clientId,
       });
-    } else {
-      realtime.send({
-        'type': 'chat.send',
-        'kind': 'sticker',
-        'sticker': clean,
-        'text': '',
-        'clientId': _clientId(),
-      });
+      return;
     }
+
+    realtime.send({
+      'type': 'chat.send',
+      'kind': 'sticker',
+      'sticker': clean,
+      'text': '',
+      'clientId': clientId,
+    });
   }
 
-  void sendGif(String url) {
+  void sendGif(String url, {String? target, String? roomId}) {
     final clean = url.trim();
     if (clean.isEmpty || !realtimeConnected) return;
+
+    lastActionError = null;
+    final privateTarget = target ?? _activePrivateTarget;
+    final channelRoomId = roomId ?? _activeChatRoomId;
     final clientId = _clientId();
+
     final payload = {
       'kind': 'gif',
       'url': clean,
       'text': '',
       'clientId': clientId,
     };
-    if (_activePrivateTarget != null) {
-      realtime.send({...payload, 'type': 'private.send', 'target': _activePrivateTarget});
-    } else if (_activeChatRoomId != null) {
-      realtime.send({...payload, 'type': 'chat.room.send', 'roomId': _activeChatRoomId});
+
+    if (privateTarget != null && privateTarget.isNotEmpty) {
+      realtime.send({
+        ...payload,
+        'type': 'private.send',
+        'target': privateTarget,
+      });
+    } else if (channelRoomId != null && channelRoomId.isNotEmpty) {
+      realtime.send({
+        ...payload,
+        'type': 'chat.room.send',
+        'roomId': channelRoomId,
+      });
     } else {
-      realtime.send({...payload, 'type': 'chat.send'});
+      realtime.send({
+        ...payload,
+        'type': 'chat.send',
+      });
     }
   }
 

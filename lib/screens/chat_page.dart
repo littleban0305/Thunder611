@@ -99,6 +99,8 @@ class _ChatPageState extends State<ChatPage> {
       dataBase64: base64Encode(file.bytes!),
       ext: ext,
       caption: file.name,
+      target: selectedPrivate,
+      roomId: activeRoomId,
     );
     if (!mounted) return;
     final error = state.lastActionError;
@@ -260,7 +262,7 @@ class _ChatPageState extends State<ChatPage> {
                                           return InkWell(
                                             borderRadius: BorderRadius.circular(14),
                                             onTap: () {
-                                              state.sendGif(gif['url']!);
+                                              state.sendGif(gif['url']!, target: selectedPrivate, roomId: activeRoomId);
                                               Navigator.pop(sheetContext);
                                             },
                                             child: ClipRRect(
@@ -324,7 +326,7 @@ class _ChatPageState extends State<ChatPage> {
                     borderRadius: BorderRadius.circular(16),
                     onTap: () {
                       Navigator.pop(context);
-                      state.sendSticker(sticker);
+                      state.sendSticker(sticker, target: selectedPrivate, roomId: activeRoomId);
                     },
                     child: Container(
                       width: 58,
