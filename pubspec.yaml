@@ -1,0 +1,34 @@
+name: thunder_611
+
+description: 雷霆611｜六年十一班專屬互動基地
+publish_to: 'none'
+version: 1.0.4+14
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.3
+  http: ^1.4.0
+  web_socket_channel: ^3.0.3
+  record: ^7.1.1
+  mp_audio_stream: ^0.2.2
+  file_picker: ^10.3.8
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/gifs/
+  fonts:
+    - family: LXGWWenKaiTC
+      fonts:
+        - asset: assets/fonts/LXGWWenKaiTC-Regular.ttf
