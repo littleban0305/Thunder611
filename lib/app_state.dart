@@ -1499,23 +1499,44 @@ class ThunderAppState extends ChangeNotifier {
     }
   }
 
-  Future<void> sendMedia({required String kind, required String dataBase64, required String ext, String caption = ''}) async {
-    final url = await _uploadMedia(kind: kind, dataBase64: dataBase64, ext: ext);
-    if (url == null) return;
+  Future<void> sendMedia({
+    required String kind,
+    required String dataBase64,
+    required String ext,
+    String caption = '',
+    String? target,
+    String? roomId,
+  }) async {
+    final url = await _uploadMedia(
+      kind: kind,
+      dataBase64: dataBase64,
+      ext: ext,
+    );
+
+    if (url == null) {
+      return;
+    }
+
     final clientId = _clientId();
-    if (_activePrivateTarget != null) {
+
+    final privateTarget = target ?? _activePrivateTarget;
+    final activeRoom = roomId ?? _activeChatRoomId;
+
+    if (privateTarget != null &&
+        privateTarget.trim().isNotEmpty) {
       realtime.send({
         'type': 'private.send',
-        'target': _activePrivateTarget,
+        'target': privateTarget,
         'kind': kind,
         'url': url,
         'text': caption,
         'clientId': clientId,
       });
-    } else if (_activeChatRoomId != null) {
+    } else if (activeRoom != null &&
+        activeRoom.trim().isNotEmpty) {
       realtime.send({
         'type': 'chat.room.send',
-        'roomId': _activeChatRoomId,
+        'roomId': activeRoom,
         'kind': kind,
         'url': url,
         'text': caption,
@@ -1532,35 +1553,49 @@ class ThunderAppState extends ChangeNotifier {
     }
   }
 
-  void sendSticker(String sticker) {
-    if (!realtimeConnected) return;
+  void sendSticker(
+    String sticker, {
+    String? target,
+    String? roomId,
+  }) {
+    if (!realtimeConnected) {
+      return;
+    }
+
     final clean = sticker.trim();
-    if (clean.isEmpty) return;
-    if (_activePrivateTarget != null) {
+
+    if (clean.isEmpty) {
+      return;
+    }
+
+    final privateTarget = target ?? _activePrivateTarget;
+    final activeRoom = roomId ?? _activeChatRoomId;
+
+    final payload = {
+      'kind': 'sticker',
+      'sticker': clean,
+      'text': '',
+      'clientId': _clientId(),
+    };
+
+    if (privateTarget != null &&
+        privateTarget.trim().isNotEmpty) {
       realtime.send({
+        ...payload,
         'type': 'private.send',
-        'target': _activePrivateTarget,
-        'kind': 'sticker',
-        'sticker': clean,
-        'text': '',
-        'clientId': _clientId(),
+        'target': privateTarget,
       });
-    } else if (_activeChatRoomId != null) {
+    } else if (activeRoom != null &&
+        activeRoom.trim().isNotEmpty) {
       realtime.send({
+        ...payload,
         'type': 'chat.room.send',
-        'roomId': _activeChatRoomId,
-        'kind': 'sticker',
-        'sticker': clean,
-        'text': '',
-        'clientId': _clientId(),
+        'roomId': activeRoom,
       });
     } else {
       realtime.send({
+        ...payload,
         'type': 'chat.send',
-        'kind': 'sticker',
-        'sticker': clean,
-        'text': '',
-        'clientId': _clientId(),
       });
     }
   }
