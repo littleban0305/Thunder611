@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -11,9 +13,8 @@ import 'voice_room_page.dart';
 
 class ChatPage extends StatefulWidget {
   final ThunderAppState state;
-  final String? initialPrivate;
 
-  const ChatPage({super.key, required this.state, this.initialPrivate});
+  const ChatPage({super.key, required this.state});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -23,17 +24,9 @@ class _ChatPageState extends State<ChatPage> {
   final controller = TextEditingController();
   String? selectedPrivate;
 
-  @override
-  void initState() {
-    super.initState();
-    selectedPrivate = widget.initialPrivate;
-    if (selectedPrivate != null) state.openPrivate(selectedPrivate!);
-  }
-
   ThunderAppState get state => widget.state;
 
-  String? get activeRoomId =>
-      selectedPrivate == null ? state.activeChatRoomId : null;
+  String? get activeRoomId => selectedPrivate == null ? state.activeChatRoomId : null;
 
   List<ChatMessage> get activeMessages {
     if (selectedPrivate != null) {
@@ -112,6 +105,188 @@ class _ChatPageState extends State<ChatPage> {
     _show(error ?? '已送出 ${isVideo ? '影片' : '圖片'}');
   }
 
+  void showEmojiPicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF10151A),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SizedBox(
+            height: 390,
+            child: EmojiPicker(
+              onEmojiSelected: (category, emoji) {
+                controller.text += emoji.emoji;
+                controller.selection = TextSelection.fromPosition(
+                  TextPosition(offset: controller.text.length),
+                );
+                Navigator.pop(sheetContext);
+              },
+              config: const Config(
+                height: 390,
+                emojiViewConfig: EmojiViewConfig(
+                  columns: 8,
+                  emojiSizeMax: 30,
+                  backgroundColor: Color(0xFF10151A),
+                ),
+                bottomActionBarConfig: BottomActionBarConfig(
+                  backgroundColor: Color(0xFF0D1115),
+                  buttonColor: Color(0xFF1B272C),
+                  buttonIconColor: Colors.white70,
+                ),
+                searchViewConfig: SearchViewConfig(
+                  backgroundColor: Color(0xFF10151A),
+                  buttonIconColor: Colors.white70,
+                  hintText: '搜尋 Emoji',
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> showGifPicker() async {
+    final key = const String.fromEnvironment('THUNDER611_GIPHY_KEY');
+    final searchController = TextEditingController();
+    List<Map<String, String>> gifs = [];
+    bool loading = true;
+    bool requested = false;
+    String query = '';
+
+    Future<void> loadGifs(StateSetter setDialog) async {
+      if (key.isEmpty) {
+        setDialog(() => loading = false);
+        return;
+      }
+      setDialog(() => loading = true);
+      final endpoint = query.trim().isEmpty
+          ? Uri.parse('https://api.giphy.com/v1/gifs/trending?api_key=$key&limit=24&rating=pg')
+          : Uri.parse('https://api.giphy.com/v1/gifs/search?api_key=$key&q=${Uri.encodeQueryComponent(query.trim())}&limit=24&rating=pg&lang=zh-TW');
+      try {
+        final response = await http.get(endpoint).timeout(const Duration(seconds: 12));
+        final body = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
+        final data = body is Map && body['data'] is List ? body['data'] as List : const [];
+        gifs = [];
+        for (final item in data) {
+          if (item is! Map) continue;
+          final images = item['images'];
+          if (images is! Map) continue;
+          final fixed = images['fixed_width'] ?? images['original'];
+          final preview = images['fixed_width_small'] ?? fixed;
+          if (fixed is Map && preview is Map) {
+            final url = '${fixed['url'] ?? ''}';
+            final previewUrl = '${preview['url'] ?? url}';
+            if (url.isNotEmpty) gifs.add({'url': url, 'preview': previewUrl});
+          }
+        }
+      } catch (_) {
+        gifs = [];
+      }
+      setDialog(() => loading = false);
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF10151A),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialog) {
+            if (loading && gifs.isEmpty && key.isNotEmpty && !requested) {
+              requested = true;
+              loadGifs(setDialog);
+            }
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.72,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Text('GIF', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                          const Spacer(),
+                          IconButton(onPressed: () => Navigator.pop(sheetContext), icon: const Icon(Icons.close_rounded)),
+                        ],
+                      ),
+                      TextField(
+                        controller: searchController,
+                        onSubmitted: (value) {
+                          query = value;
+                          requested = true;
+                          loadGifs(setDialog);
+                        },
+                        decoration: InputDecoration(
+                          hintText: key.isEmpty ? '需要設定 GIPHY API Key' : '搜尋 GIF，例如：笑、驚訝、開心',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: IconButton(
+                            onPressed: key.isEmpty
+                                ? null
+                                : () {
+                                    query = searchController.text;
+                                    requested = true;
+                                    loadGifs(setDialog);
+                                  },
+                            icon: const Icon(Icons.arrow_forward_rounded),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: key.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  '尚未設定 GIPHY API Key\n請用 --dart-define=THUNDER611_GIPHY_KEY=你的Key 啟動',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.white54),
+                                ),
+                              )
+                            : loading
+                                ? const Center(child: CircularProgressIndicator())
+                                : gifs.isEmpty
+                                    ? const Center(child: Text('找不到 GIF', style: TextStyle(color: Colors.white54)))
+                                    : GridView.builder(
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 3,
+                                          crossAxisSpacing: 8,
+                                          mainAxisSpacing: 8,
+                                        ),
+                                        itemCount: gifs.length,
+                                        itemBuilder: (_, index) {
+                                          final gif = gifs[index];
+                                          return InkWell(
+                                            borderRadius: BorderRadius.circular(14),
+                                            onTap: () {
+                                              state.sendGif(gif['url']!);
+                                              Navigator.pop(sheetContext);
+                                            },
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(14),
+                                              child: Image.network(gif['preview']!, fit: BoxFit.cover),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 6),
+                        child: Text('Powered by GIPHY', style: TextStyle(fontSize: 10, color: Colors.white30)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    searchController.dispose();
+  }
+
   void pickSticker() {
     const stickers = [
       '😂',
@@ -137,46 +312,36 @@ class _ChatPageState extends State<ChatPage> {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF111117),
-      builder: (_) => DefaultTabController(
-        length: 2,
-        child: SafeArea(
-          child: SizedBox(
-            height: 300,
-            child: Column(
-              children: [
-                const TabBar(tabs: [Tab(text: '表情符號'), Tab(text: 'GIF')]),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: stickers.map((sticker) => InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              Navigator.pop(context);
-                              state.sendSticker(sticker, target: selectedPrivate);
-                            },
-                            child: SizedBox(width: 50, height: 50, child: Center(child: Text(sticker, style: const TextStyle(fontSize: 30)))),
-                          )).toList(),
-                        ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: stickers
+                .map(
+                  (sticker) => InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.pop(context);
+                      state.sendSticker(sticker);
+                    },
+                    child: Container(
+                      width: 58,
+                      height: 58,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      Center(
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.pop(context);
-                            state.sendGif('loading.gif', target: selectedPrivate);
-                          },
-                          child: Image.asset('assets/gifs/loading.gif', width: 150, height: 150),
-                        ),
+                      child: Text(
+                        sticker,
+                        style: const TextStyle(fontSize: 30),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                )
+                .toList(),
           ),
         ),
       ),
@@ -260,52 +425,37 @@ class _ChatPageState extends State<ChatPage> {
 
   void _showCreateRoomDialog() {
     final roomController = TextEditingController();
-    var isPublic = true;
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: const Text('新增聊天室'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: roomController,
-                  maxLength: 30,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: '聊天室名稱',
-                    hintText: '例如：剪片研究所',
-                  ),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('公開聊天室'),
-                  subtitle: Text(isPublic ? '會出現在公開列表' : '只能用聊天室 ID 加入'),
-                  value: isPublic,
-                  onChanged: (value) => setDialogState(() => isPublic = value),
-                ),
-              ],
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('新增聊天室'),
+          content: TextField(
+            controller: roomController,
+            maxLength: 30,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: '聊天室名稱',
+              hintText: '例如：剪片研究所',
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  final name = roomController.text.trim();
-                  if (name.isEmpty) return;
-                  state.createChatRoom(name, isPublic: isPublic);
-                  Navigator.pop(dialogContext);
-                },
-                child: const Text('建立'),
-              ),
-            ],
-          );
-        },
-      ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final name = roomController.text.trim();
+                if (name.isEmpty) return;
+                state.createChatRoom(name);
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('建立'),
+            ),
+          ],
+        );
+      },
     ).whenComplete(roomController.dispose);
   }
 
@@ -345,9 +495,7 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     ),
                     title: Text(name),
-                    subtitle: Text(
-                      '${room['isPublic'] == true ? '公開' : '私人'} · ID ${room['id']} · ${room['members'] ?? 0} 人',
-                    ),
+                    subtitle: Text('${room['members'] ?? 0} 人'),
                     trailing: FilledButton.tonal(
                       onPressed: joined
                           ? () {
@@ -376,53 +524,12 @@ class _ChatPageState extends State<ChatPage> {
                     label: const Text('新增聊天室'),
                   ),
                 ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      _showJoinRoomDialog();
-                    },
-                    icon: const Icon(Icons.key_rounded),
-                    label: const Text('使用聊天室 ID 加入'),
-                  ),
-                ),
               ],
             ),
           ),
         );
       },
     );
-  }
-
-  void _showJoinRoomDialog() {
-    final idController = TextEditingController();
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('加入聊天室'),
-        content: TextField(
-          controller: idController,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: '聊天室 ID'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('取消')),
-          FilledButton(
-            onPressed: () {
-              final id = idController.text.trim();
-              if (id.isEmpty) return;
-              state.joinChatRoom(id);
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('加入'),
-          ),
-        ],
-      ),
-    ).whenComplete(idController.dispose);
   }
 
   void _showEditMessage(ChatMessage message) {
@@ -560,10 +667,7 @@ class _ChatPageState extends State<ChatPage> {
                 height: 44,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withValues(alpha: 0.14),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
                 ),
                 child: Icon(
                   Icons.forum_rounded,
@@ -577,8 +681,7 @@ class _ChatPageState extends State<ChatPage> {
                   children: [
                     Text(
                       activeTitle,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.w900),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                     ),
                     Text(
                       selectedPrivate != null
@@ -586,8 +689,7 @@ class _ChatPageState extends State<ChatPage> {
                           : isRoom
                               ? '聊天室 · ${voiceUsers.length} 人語音'
                               : '訊息 · 媒體 · 投票',
-                      style:
-                          const TextStyle(fontSize: 11, color: Colors.white38),
+                      style: const TextStyle(fontSize: 11, color: Colors.white38),
                     ),
                   ],
                 ),
@@ -630,36 +732,36 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
               ...state.chatRooms.where((room) => room['joined'] == true).map(
-                (room) {
-                  final id = '${room['id'] ?? ''}';
-                  final active = selectedPrivate == null && activeRoomId == id;
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: _ModeChip(
-                      label: '${room['name'] ?? id}',
-                      active: active,
-                      onTap: () {
-                        state.selectChatRoom(id);
-                        setState(() => selectedPrivate = null);
-                      },
-                      onClose: () => state.leaveChatRoom(id),
-                    ),
-                  );
-                },
-              ),
-              ...state.privateMessages.keys.map(
-                (name) => Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: _ModeChip(
-                    label: name,
-                    active: selectedPrivate == name,
-                    onTap: () {
-                      state.openPrivate(name);
-                      setState(() => selectedPrivate = name);
+                    (room) {
+                      final id = '${room['id'] ?? ''}';
+                      final active = selectedPrivate == null && activeRoomId == id;
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: _ModeChip(
+                          label: '${room['name'] ?? id}',
+                          active: active,
+                          onTap: () {
+                            state.selectChatRoom(id);
+                            setState(() => selectedPrivate = null);
+                          },
+                          onClose: () => state.leaveChatRoom(id),
+                        ),
+                      );
                     },
                   ),
-                ),
-              ),
+              ...state.privateMessages.keys.map(
+                    (name) => Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: _ModeChip(
+                        label: name,
+                        active: selectedPrivate == name,
+                        onTap: () {
+                          state.openPrivate(name);
+                          setState(() => selectedPrivate = name);
+                        },
+                      ),
+                    ),
+                  ),
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: IconButton.filledTonal(
@@ -725,16 +827,25 @@ class _ChatPageState extends State<ChatPage> {
                   icon: const Icon(Icons.attach_file_rounded),
                 ),
                 IconButton(
-                  onPressed: pickSticker,
-                  tooltip: '貼圖／表情',
+                  onPressed: showEmojiPicker,
+                  tooltip: 'Emoji',
                   icon: const Icon(Icons.emoji_emotions_outlined),
                 ),
-                if (selectedPrivate == null)
-                  IconButton(
-                    onPressed: createPoll,
-                    tooltip: '投票',
-                    icon: const Icon(Icons.poll_outlined),
-                  ),
+                IconButton(
+                  onPressed: showGifPicker,
+                  tooltip: 'GIF',
+                  icon: const Icon(Icons.gif_box_rounded),
+                ),
+                IconButton(
+                  onPressed: pickSticker,
+                  tooltip: '貼圖',
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                ),
+                IconButton(
+                  onPressed: createPoll,
+                  tooltip: '投票',
+                  icon: const Icon(Icons.poll_outlined),
+                ),
                 Expanded(
                   child: TextField(
                     controller: controller,
@@ -861,9 +972,7 @@ class _ChannelVoiceBanner extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: isBusy
-                    ? primary.withValues(alpha: 0.18)
-                    : Colors.white.withValues(alpha: 0.05),
+                color: isBusy ? primary.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -904,15 +1013,12 @@ class _ChannelVoiceBanner extends StatelessWidget {
                               child: CircleAvatar(
                                 radius: 13,
                                 backgroundColor: const Color(0xFF24222D),
-                                backgroundImage:
-                                    '${users[i]['avatarUrl'] ?? ''}'.isEmpty
-                                        ? null
-                                        : NetworkImage(BackendConfig.mediaUrl(
-                                            '${users[i]['avatarUrl']}')),
+                                backgroundImage: '${users[i]['avatarUrl'] ?? ''}'.isEmpty
+                                    ? null
+                                    : NetworkImage(BackendConfig.mediaUrl('${users[i]['avatarUrl']}')),
                                 child: '${users[i]['avatarUrl'] ?? ''}'.isEmpty
                                     ? Text(
-                                        '${users[i]['name'] ?? '?'}'
-                                            .substring(0, 1),
+                                        '${users[i]['name'] ?? '?'}'.substring(0, 1),
                                         style: const TextStyle(fontSize: 10),
                                       )
                                     : null,
@@ -929,11 +1035,9 @@ class _ChannelVoiceBanner extends StatelessWidget {
                   context,
                   PageRouteBuilder(
                     transitionDuration: const Duration(milliseconds: 260),
-                    reverseTransitionDuration:
-                        const Duration(milliseconds: 180),
+                    reverseTransitionDuration: const Duration(milliseconds: 180),
                     pageBuilder: (_, animation, __) => FadeTransition(
-                      opacity: CurvedAnimation(
-                          parent: animation, curve: Curves.easeOut),
+                      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
                       child: VoiceRoomPage(
                         state: state,
                         roomType: 'channel',
@@ -951,6 +1055,7 @@ class _ChannelVoiceBanner extends StatelessWidget {
       ),
     );
   }
+
 }
 
 class _MessageCard extends StatelessWidget {
@@ -978,7 +1083,11 @@ class _MessageCard extends StatelessWidget {
           height: 210,
         ),
       'video' => _NetworkVideo(url: '${payload['url'] ?? ''}'),
-        'sticker' => _StickerContent(value: '${payload['sticker'] ?? '😂'}'),
+      'gif' => _NetworkMedia(url: '${payload['url'] ?? ''}', width: 300, height: 220),
+      'sticker' => Text(
+          '${payload['sticker'] ?? '😂'}',
+          style: const TextStyle(fontSize: 54),
+        ),
       'poll' => _PollCard(state: state, message: message),
       _ => Text(
           message.text,
@@ -993,7 +1102,9 @@ class _MessageCard extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 620),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: mine ? primary.withValues(alpha: 0.16) : const Color(0xFF111117),
+        color: mine
+            ? primary.withValues(alpha: 0.16)
+            : const Color(0xFF111117),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.05),
@@ -1057,19 +1168,6 @@ class _MessageCard extends StatelessWidget {
       onLongPress: onMenu,
       child: card,
     );
-  }
-}
-
-class _StickerContent extends StatelessWidget {
-  final String value;
-  const _StickerContent({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    if (value == 'gif:loading.gif') {
-      return Image.asset('assets/gifs/loading.gif', width: 150, height: 150);
-    }
-    return Text(value, style: const TextStyle(fontSize: 54));
   }
 }
 

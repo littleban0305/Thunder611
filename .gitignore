@@ -9,12 +9,3 @@ lib/generated/
 .idea/
 .vscode/
 *.iml
-
-# Server dependencies
-server/node_modules/
-
-# Server runtime data
-server/data/*.sqlite
-server/data/users.json
-server/data/uploads/*
-!server/data/uploads/.gitkeep

@@ -13,8 +13,7 @@ class ShopPage extends StatelessWidget {
       slivers: [
         SliverAppBar(
           pinned: true,
-          title:
-              const Text('商店', style: TextStyle(fontWeight: FontWeight.w900)),
+          title: const Text('商店', style: TextStyle(fontWeight: FontWeight.w900)),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 18),
@@ -37,8 +36,7 @@ class ShopPage extends StatelessWidget {
                 children: [
                   const Icon(Icons.inventory_2_outlined, size: 19),
                   const SizedBox(width: 9),
-                  const Text('背包',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
+                  const Text('背包', style: TextStyle(fontWeight: FontWeight.w800)),
                   const Spacer(),
                   Text(
                     '${state.inventoryCount} 件',
@@ -76,33 +74,20 @@ class ShopPage extends StatelessWidget {
                         ],
                       ),
                       const Spacer(),
-                      Text(item.name,
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w900)),
+                      Text(item.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 4),
-                      Text(item.effect,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.white54)),
+                      Text(item.effect, style: const TextStyle(fontSize: 12, color: Colors.white54)),
                       const SizedBox(height: 11),
                       Row(
                         children: [
-                          Text('${item.cost}',
-                              style: const TextStyle(
-                                  color: Colors.amber,
-                                  fontWeight: FontWeight.w900)),
+                          Text('${item.cost}', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w900)),
                           const Spacer(),
                           SizedBox(
                             width: 76,
                             child: FilledButton.tonal(
-                              onPressed: state.itemBusy.contains(item.id)
-                                  ? null
-                                  : () => _buy(context, item),
+                              onPressed: state.itemBusy.contains(item.id) ? null : () => _buy(context, item),
                               child: state.itemBusy.contains(item.id)
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2))
+                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                                   : const Text('買'),
                             ),
                           ),
@@ -147,9 +132,7 @@ class _InventoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = state.shopItems
-        .where((item) => (state.inventory[item.id] ?? 0) > 0)
-        .toList();
+    final items = state.shopItems.where((item) => (state.inventory[item.id] ?? 0) > 0).toList();
     if (items.isEmpty) {
       return const SectionCard(
         child: Row(
@@ -168,35 +151,21 @@ class _InventoryCard extends StatelessWidget {
         children: items.map((item) {
           final count = state.inventory[item.id] ?? 0;
           final auto = item.id == 'shield';
-          final memberAction = item.id == 'steal';
           return ListTile(
             dense: true,
             leading: Text(item.icon, style: const TextStyle(fontSize: 23)),
-            title: Text(item.name,
-                style: const TextStyle(fontWeight: FontWeight.w800)),
+            title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w800)),
             subtitle: Text(
-              auto
-                  ? '被偷時自動消耗'
-                  : memberAction
-                      ? '請從成員操作使用 · 持有 $count 件'
-                      : '持有 $count 件',
+              auto ? '自動生效' : '持有 $count 件',
               style: const TextStyle(fontSize: 11, color: Colors.white38),
             ),
-            trailing: auto || memberAction
-                ? Icon(
-                    auto ? Icons.shield_outlined : Icons.people_alt_outlined,
-                    color: auto ? Colors.greenAccent : Colors.white54,
-                  )
+            trailing: auto
+                ? const Icon(Icons.shield_outlined, color: Colors.greenAccent)
                 : FilledButton.tonal(
-                    onPressed: state.itemBusy.contains(item.id)
-                        ? null
-                        : () => _use(context, item),
-                    child: state.itemBusy.contains(item.id)
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('使用'),
+                onPressed: state.itemBusy.contains(item.id) ? null : () => _use(context, item),
+                child: state.itemBusy.contains(item.id)
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('使用'),
                   ),
           );
         }).toList(),
@@ -206,8 +175,7 @@ class _InventoryCard extends StatelessWidget {
 
   void _use(BuildContext context, ShopItem item) {
     if (!state.realtimeConnected) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('請先連上伺服器')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請先連上伺服器')));
       return;
     }
     if (item.id == 'scan') {
@@ -240,9 +208,7 @@ class _InventoryCard extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(18, 18, 18, 8),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('選擇目標',
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                child: Text('選擇目標', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
               ),
             ),
             ...candidates.map(

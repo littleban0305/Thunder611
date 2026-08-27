@@ -113,3 +113,16 @@ flutter pub get
 flutter analyze
 flutter run -d android
 ```
+
+
+## V1.1 聊天 Emoji + GIF
+- 使用 `emoji_picker_flutter` 提供完整 Emoji 選擇器、分類、搜尋與最近使用。
+- 聊天室與私訊支援 GIF 訊息。
+- GIF 搜尋／Trending 使用 GIPHY API，限制 `PG` 評級。
+- 啟動時可用 `--dart-define=THUNDER611_GIPHY_KEY=你的Key` 注入 GIPHY API Key。
+- GIF 訊息以網路 URL 儲存，不把 GIF 檔案塞進 WebSocket。
+
+### GIF 啟動範例
+```powershell
+flutter run -d windows --dart-define=THUNDER611_GIPHY_KEY=你的GIPHY_API_KEY
+```

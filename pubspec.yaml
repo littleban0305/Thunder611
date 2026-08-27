@@ -2,7 +2,7 @@ name: thunder_611
 
 description: 雷霆611｜六年十一班專屬互動基地
 publish_to: 'none'
-version: 1.0.4+14
+version: 1.1.0+15
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -20,14 +20,13 @@ dependencies:
   media_kit: ^1.2.6
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
+  emoji_picker_flutter: ^4.5.3
 
 dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/gifs/
   fonts:
     - family: LXGWWenKaiTC
       fonts:

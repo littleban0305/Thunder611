@@ -7,7 +7,6 @@ import '../app_state.dart';
 import '../services/backend_config.dart';
 import '../widgets/section_card.dart';
 import 'admin_page.dart';
-import 'chat_page.dart';
 
 class CommunityPage extends StatefulWidget {
   final ThunderAppState state;
@@ -211,7 +210,8 @@ class _CommunityPageState extends State<CommunityPage> {
                 ),
                 child: SectionCard(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
@@ -260,7 +260,9 @@ class _CommunityPageState extends State<CommunityPage> {
               child: _sectionTitle('班級回憶'),
             ),
             FilledButton.tonalIcon(
-              onPressed: state.realtimeConnected ? addMemory : null,
+              onPressed: state.realtimeConnected
+                  ? addMemory
+                  : null,
               icon: const Icon(
                 Icons.add_photo_alternate_outlined,
               ),
@@ -281,8 +283,10 @@ class _CommunityPageState extends State<CommunityPage> {
         else
           GridView.builder(
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            physics:
+                const NeverScrollableScrollPhysics(),
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
@@ -323,7 +327,8 @@ class _CommunityPageState extends State<CommunityPage> {
               }
 
               return ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius:
+                    BorderRadius.circular(18),
                 child: Container(
                   color: const Color(0xFF111117),
                   child: content,
@@ -356,7 +361,11 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                 )
               else
-                for (var i = 0; i < state.leaderboard.length; i++)
+                for (
+                  var i = 0;
+                  i < state.leaderboard.length;
+                  i++
+                )
                   ListTile(
                     dense: true,
                     leading: CircleAvatar(
@@ -386,10 +395,6 @@ class _CommunityPageState extends State<CommunityPage> {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    onTap: () => _memberActions(
-                      context,
-                      '${state.leaderboard[i]['name'] ?? ''}',
-                    ),
                   ),
             ],
           ),
@@ -417,15 +422,20 @@ class _CommunityPageState extends State<CommunityPage> {
           ...state.voiceRooms.map(
             (room) {
               final roomId = '${room['id']}';
-              final roomName = '${room['name'] ?? roomId}';
-              final userCount = '${room['users'] ?? 0}';
-              final locked = room['locked'] == true;
+              final roomName =
+                  '${room['name'] ?? roomId}';
+              final userCount =
+                  '${room['users'] ?? 0}';
+              final locked =
+                  room['locked'] == true;
 
               final inThisRoom =
-                  state.voice.active && state.voice.roomId == roomId;
+                  state.voice.active &&
+                  state.voice.roomId == roomId;
 
               return Padding(
-                padding: const EdgeInsets.only(
+                padding:
+                    const EdgeInsets.only(
                   bottom: 10,
                 ),
                 child: SectionCard(
@@ -437,39 +447,48 @@ class _CommunityPageState extends State<CommunityPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
                           children: [
                             Text(
                               roomName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
+                              style:
+                                  const TextStyle(
+                                fontWeight:
+                                    FontWeight.w900,
                               ),
                             ),
                             Text(
                               '$userCount 人'
                               '${locked ? ' · 已鎖定' : ''}',
-                              style: const TextStyle(
+                              style:
+                                  const TextStyle(
                                 fontSize: 11,
-                                color: Colors.white38,
+                                color:
+                                    Colors.white38,
                               ),
                             ),
                           ],
                         ),
                       ),
                       FilledButton.tonal(
-                        onPressed: locked && !state.isAdmin
-                            ? null
-                            : () {
-                                if (inThisRoom) {
-                                  state.stopVoice();
-                                } else {
-                                  state.joinGlobalVoice(
-                                    roomId,
-                                  );
-                                }
-                              },
+                        onPressed:
+                            locked &&
+                                    !state.isAdmin
+                                ? null
+                                : () {
+                                    if (inThisRoom) {
+                                      state.stopVoice();
+                                    } else {
+                                      state.joinGlobalVoice(
+                                        roomId,
+                                      );
+                                    }
+                                  },
                         child: Text(
-                          inThisRoom ? '離開' : '加入',
+                          inThisRoom
+                              ? '離開'
+                              : '加入',
                         ),
                       ),
                     ],
@@ -484,7 +503,9 @@ class _CommunityPageState extends State<CommunityPage> {
             child: Row(
               children: [
                 Icon(
-                  state.voice.muted ? Icons.mic_off_rounded : Icons.mic_rounded,
+                  state.voice.muted
+                      ? Icons.mic_off_rounded
+                      : Icons.mic_rounded,
                   color: Colors.greenAccent,
                 ),
                 const SizedBox(width: 8),
@@ -497,10 +518,12 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                 ),
                 IconButton(
-                  onPressed: state.toggleVoiceMute,
+                  onPressed:
+                      state.toggleVoiceMute,
                   icon: Icon(
                     state.voice.muted
-                        ? Icons.mic_off_rounded
+                        ? Icons
+                            .mic_off_rounded
                         : Icons.mic_rounded,
                   ),
                 ),
@@ -514,55 +537,6 @@ class _CommunityPageState extends State<CommunityPage> {
             ),
           ),
       ],
-    );
-  }
-
-  void _memberActions(BuildContext context, String target) {
-    if (target.isEmpty || target == state.username) return;
-    final isFriend = state.friends.any((friend) => friend.name == target);
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF111117),
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
-              title: Text(target,
-                  style: const TextStyle(fontWeight: FontWeight.w900)),
-              subtitle: const Text('成員操作'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.chat_bubble_outline_rounded),
-              title: const Text('私訊'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                state.openPrivate(target);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) =>
-                            ChatPage(state: state, initialPrivate: target)));
-              },
-            ),
-            ListTile(
-              leading: Icon(isFriend
-                  ? Icons.person_remove_outlined
-                  : Icons.person_add_alt_1_rounded),
-              title: Text(isFriend ? '刪除好友' : '加好友'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                if (isFriend) {
-                  state.removeFriend(target);
-                } else {
-                  state.sendFriendRequest(target);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 

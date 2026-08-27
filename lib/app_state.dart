@@ -202,14 +202,12 @@ class WerewolfPlayer {
   final bool alive;
   final bool connected;
   final String? role;
-  final bool bot;
 
   const WerewolfPlayer({
     required this.name,
     required this.alive,
     required this.connected,
     this.role,
-    this.bot = false,
   });
 
   factory WerewolfPlayer.fromJson(Map<String, dynamic> json) => WerewolfPlayer(
@@ -217,7 +215,6 @@ class WerewolfPlayer {
         alive: json['alive'] == true,
         connected: json['connected'] == true,
         role: json['role']?.toString(),
-        bot: json['bot'] == true,
       );
 }
 
@@ -388,7 +385,15 @@ class ThunderAppState extends ChangeNotifier {
       ),
       ChatMessage(sender: username, text: '狼人殺我可以', time: _time(now)),
     ];
-    privateMessages = {};
+    privateMessages = {
+      '小明': [
+        ChatMessage(sender: '小明', text: '晚上八點語音？', time: '19:42'),
+        ChatMessage(sender: username, text: '可以', time: '19:44'),
+      ],
+      '阿偉': [
+        ChatMessage(sender: '阿偉', text: '你有空再叫我', time: '昨天'),
+      ],
+    };
     _restore();
   }
 
@@ -441,7 +446,13 @@ class ThunderAppState extends ChangeNotifier {
   List<MemoryItem> memories = const [];
   List<Map<String, dynamic>> adminUsers = const [];
 
-  List<Member> members = const [];
+  List<Member> members = const [
+    Member(name: '小明', online: true, status: '遊戲中', coins: 2430),
+    Member(name: '阿偉', online: true, status: '在線', coins: 1910),
+    Member(name: '小華', online: false, status: '離線', coins: 860),
+    Member(name: '阿翔', online: true, status: '語音房', coins: 3180),
+    Member(name: '小婷', online: false, status: '離線', coins: 1260),
+  ];
 
   final shopItems = const [
     ShopItem(id: 'steal', name: '偷金幣卡', icon: '🕵️', effect: '偷取 5%～15%', cost: 800),
@@ -506,13 +517,6 @@ class ThunderAppState extends ChangeNotifier {
           value.map(ChatMessage.fromJson).toList(),
         ),
       );
-      privateMessages.removeWhere((key, messages) {
-        if (key != '小明' && key != '阿偉') return false;
-        return messages.every((message) =>
-            (key == '小明' &&
-                (message.text == '晚上八點語音？' || message.text == '可以')) ||
-            (key == '阿偉' && message.text == '你有空再叫我'));
-      });
     }
 
     restoring = false;
@@ -535,7 +539,6 @@ class ThunderAppState extends ChangeNotifier {
         token: token,
         onEvent: _handleRealtimeEvent,
         onBinary: voice.handleBinary,
-        onConnectionChanged: _handleConnectionChanged,
       );
       realtimeConnected = true;
       notifyListeners();
@@ -544,16 +547,6 @@ class ThunderAppState extends ChangeNotifier {
       itemBusy.clear();
       notifyListeners();
     }
-  }
-
-  void _handleConnectionChanged(bool connected) {
-    realtimeConnected = connected;
-    if (!connected) {
-      itemBusy.clear();
-      werewolfBusy = false;
-      truthBusy = false;
-    }
-    notifyListeners();
   }
 
   void _handleRealtimeEvent(Map<String, dynamic> event) {
@@ -588,13 +581,6 @@ class ThunderAppState extends ChangeNotifier {
       final rawChatRooms = event['chatRooms'];
       if (rawChatRooms is List) {
         chatRooms = rawChatRooms.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
-      }
-      final rawPrivatePeers = event['privatePeers'];
-      if (rawPrivatePeers is List) {
-        for (final peer in rawPrivatePeers) {
-          final name = '$peer'.trim();
-          if (name.isNotEmpty && name != username) privateMessages.putIfAbsent(name, () => []);
-        }
       }
 
       _applyMembers(event['members']);
@@ -788,11 +774,6 @@ class ThunderAppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    if (type == 'admin.result') {
-      if (event['action'] == 'ban' || event['action'] == 'unban') loadAdminUsers();
-      notifyListeners();
-      return;
-    }
     if (type == 'banned') {
       lastActionError = '${event['reason'] ?? '帳號已被封禁'}';
       realtime.disconnect();
@@ -870,17 +851,6 @@ class ThunderAppState extends ChangeNotifier {
       }
       _persist();
       notifyListeners();
-      return;
-    }
-
-    if (type == 'private.started') {
-      final peer = '${event['target'] ?? ''}';
-      if (peer.isNotEmpty && peer != username) {
-        privateMessages.putIfAbsent(peer, () => []);
-        lastNotificationText = '$peer 開始了與你的私訊';
-        _persist();
-        notifyListeners();
-      }
       return;
     }
 
@@ -993,8 +963,6 @@ class ThunderAppState extends ChangeNotifier {
           lastNotificationText = '${map['attacker'] ?? ''} 偷走了 ${map['stolen'] ?? 0} 金幣';
         } else if (kind == 'wallet.steal_blocked') {
           lastNotificationText = '${map['attacker'] ?? ''} 想偷你，但護盾擋住了';
-        } else if (kind == 'private.started') {
-          lastNotificationText = '${map['sender'] ?? ''} 開始了與你的私訊';
         } else {
           lastNotificationText = '收到新通知';
         }
@@ -1352,9 +1320,9 @@ class ThunderAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void createChatRoom(String name, {bool isPublic = true}) {
+  void createChatRoom(String name) {
     if (!realtimeConnected) return;
-    realtime.send({'type': 'chat.room.create', 'name': name.trim(), 'isPublic': isPublic, 'requestId': _clientId()});
+    realtime.send({'type': 'chat.room.create', 'name': name.trim(), 'requestId': _clientId()});
   }
 
   void joinChatRoom(String roomId) {
@@ -1564,15 +1532,14 @@ class ThunderAppState extends ChangeNotifier {
     }
   }
 
-  void sendSticker(String sticker, {String? target}) {
+  void sendSticker(String sticker) {
     if (!realtimeConnected) return;
     final clean = sticker.trim();
     if (clean.isEmpty) return;
-    final privateTarget = target ?? _activePrivateTarget;
-    if (privateTarget != null) {
+    if (_activePrivateTarget != null) {
       realtime.send({
         'type': 'private.send',
-        'target': privateTarget,
+        'target': _activePrivateTarget,
         'kind': 'sticker',
         'sticker': clean,
         'text': '',
@@ -1598,8 +1565,23 @@ class ThunderAppState extends ChangeNotifier {
     }
   }
 
-  void sendGif(String assetName, {String? target}) {
-    sendSticker('gif:$assetName', target: target);
+  void sendGif(String url) {
+    final clean = url.trim();
+    if (clean.isEmpty || !realtimeConnected) return;
+    final clientId = _clientId();
+    final payload = {
+      'kind': 'gif',
+      'url': clean,
+      'text': '',
+      'clientId': clientId,
+    };
+    if (_activePrivateTarget != null) {
+      realtime.send({...payload, 'type': 'private.send', 'target': _activePrivateTarget});
+    } else if (_activeChatRoomId != null) {
+      realtime.send({...payload, 'type': 'chat.room.send', 'roomId': _activeChatRoomId});
+    } else {
+      realtime.send({...payload, 'type': 'chat.send'});
+    }
   }
 
   void createPoll(String question, List<String> options) {
@@ -1711,7 +1693,7 @@ class ThunderAppState extends ChangeNotifier {
     realtime.send({'type': 'werewolf.list'});
   }
 
-  void createWerewolfRoom({int maxPlayers = 8, int botCount = 0}) {
+  void createWerewolfRoom({int maxPlayers = 8}) {
     if (!realtimeConnected || werewolfBusy) return;
     werewolfBusy = true;
     lastActionError = null;
@@ -1719,7 +1701,6 @@ class ThunderAppState extends ChangeNotifier {
     realtime.send({
       'type': 'werewolf.create',
       'maxPlayers': maxPlayers,
-      'botCount': botCount,
       'requestId': _clientId(),
     });
   }

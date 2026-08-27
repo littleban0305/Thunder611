@@ -35,8 +35,8 @@ class _AdminPageState extends State<AdminPage> {
                 title: Text('${u['username'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text('${u['coins'] ?? 0} 金幣 · ${u['wins'] ?? 0} 勝 · ${u['role'] ?? 'member'}'),
                 trailing: u['banned'] == true || u['banned'] == 1
-                    ? FilledButton.tonal(onPressed: () { state.adminUnban('${u['username']}'); }, child: const Text('解封'))
-                    : TextButton(onPressed: '${u['username']}' == state.username ? null : () { state.adminBan('${u['username']}'); }, child: const Text('封禁')),
+                    ? FilledButton.tonal(onPressed: () { state.adminUnban('${u['username']}'); state.loadAdminUsers(); }, child: const Text('解封'))
+                    : TextButton(onPressed: '${u['username']}' == state.username ? null : () { state.adminBan('${u['username']}'); state.loadAdminUsers(); }, child: const Text('封禁')),
               )).toList())),
           const SizedBox(height: 18),
           const Text('發布公告', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),

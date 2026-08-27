@@ -4,7 +4,6 @@ const path = require('path');
 let SQL = null;
 let db = null;
 let dbFile = null;
-let transactionDepth = 0;
 
 async function initStorage(dataDir) {
   const initSqlJs = require('sql.js');
@@ -145,7 +144,6 @@ async function initStorage(dataDir) {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       created_by TEXT NOT NULL,
-      is_public INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL,
       FOREIGN KEY (created_by) REFERENCES users(username) ON DELETE CASCADE
     );
@@ -183,7 +181,6 @@ async function initStorage(dataDir) {
   ensureColumn('lobby_messages', 'edited', "INTEGER NOT NULL DEFAULT 0");
   ensureColumn('private_messages', 'edited', "INTEGER NOT NULL DEFAULT 0");
   ensureColumn('chat_room_messages', 'edited', "INTEGER NOT NULL DEFAULT 0");
-  ensureColumn('chat_rooms', 'is_public', "INTEGER NOT NULL DEFAULT 1");
 
 
   const defaults = [
@@ -197,8 +194,25 @@ async function initStorage(dataDir) {
 
   migrateLegacyUsers(dataDir);
 
-  run("DELETE FROM chat_room_members WHERE room_id IN ('chat', 'game')");
-  run("DELETE FROM chat_rooms WHERE id IN ('chat', 'game')");
+  const chatDefaults = [
+    ['chat', '聊天房'],
+    ['game', '遊戲房'],
+  ];
+  const firstUser = get('SELECT username FROM users ORDER BY created_at ASC LIMIT 1');
+  if (firstUser?.username) {
+    for (const [id, name] of chatDefaults) {
+      run('INSERT OR IGNORE INTO chat_rooms(id, name, created_by, created_at) VALUES (?, ?, ?, ?)', [id, name, firstUser.username, new Date().toISOString()]);
+    }
+    const rooms = query('SELECT id FROM chat_rooms');
+    const users = query('SELECT username FROM users');
+    const stmt = db.prepare('INSERT OR IGNORE INTO chat_room_members(room_id, username, joined_at) VALUES (?, ?, ?)');
+    const now = new Date().toISOString();
+    for (const room of rooms) {
+      for (const u of users) stmt.run([room.id, u.username, now]);
+    }
+    stmt.free();
+    persist();
+  }
   const adminCount = Number(get("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'")?.count || 0);
   if (adminCount === 0) {
     const first = get('SELECT username FROM users ORDER BY created_at ASC LIMIT 1');
@@ -269,26 +283,18 @@ function run(sql, params = []) {
   const stmt = db.prepare(sql);
   stmt.run(params);
   stmt.free();
-  if (transactionDepth === 0) persist();
+  persist();
 }
 
 function transaction(callback) {
-  const outermost = transactionDepth === 0;
-  if (outermost) db.run('BEGIN TRANSACTION');
-  transactionDepth += 1;
+  db.run('BEGIN');
   try {
     const result = callback();
-    transactionDepth -= 1;
-    if (outermost) {
-      db.run('COMMIT');
-      persist();
-    }
+    db.run('COMMIT');
+    persist();
     return result;
   } catch (error) {
-    transactionDepth = Math.max(0, transactionDepth - 1);
-    if (outermost) {
-      try { db.run('ROLLBACK'); } catch {}
-    }
+    try { db.run('ROLLBACK'); } catch {}
     throw error;
   }
 }
@@ -495,15 +501,6 @@ function privateHistory(username, other, limit = 100) {
       payload,
     };
   });
-}
-
-function privatePeers(username) {
-  return query(`
-    SELECT DISTINCT CASE WHEN sender = ? THEN target ELSE sender END AS peer
-    FROM private_messages
-    WHERE sender = ? OR target = ?
-    ORDER BY peer COLLATE NOCASE
-  `, [username, username, username]).map((row) => row.peer).filter(Boolean);
 }
 
 function leaderboardLegacy(limit = 20) {
@@ -871,22 +868,29 @@ function memories(limit = 100) {
 function deleteMemory(id) { run('DELETE FROM memories WHERE id = ?', [Number(id)]); }
 
 function ensureDefaultChatRooms(username) {
-  return Boolean(username && user(username));
+  if (!user(username)) return;
+  const defaults = [
+    ['chat', '聊天房'],
+    ['game', '遊戲房'],
+  ];
+  const now = new Date().toISOString();
+  for (const [id, name] of defaults) {
+    run('INSERT OR IGNORE INTO chat_rooms(id, name, created_by, created_at) VALUES (?, ?, ?, ?)', [id, name, username, now]);
+    run('INSERT OR IGNORE INTO chat_room_members(room_id, username, joined_at) VALUES (?, ?, ?)', [id, username, now]);
+  }
 }
 
 function chatRooms(username) {
   return query(`
-    SELECT r.id, r.name, r.created_by, r.is_public, r.created_at,
+    SELECT r.id, r.name, r.created_by, r.created_at,
            EXISTS(SELECT 1 FROM chat_room_members m2 WHERE m2.room_id = r.id AND m2.username = ?) AS joined,
            (SELECT COUNT(*) FROM chat_room_members m3 WHERE m3.room_id = r.id) AS members
     FROM chat_rooms r
-    WHERE r.is_public = 1 OR EXISTS(SELECT 1 FROM chat_room_members m4 WHERE m4.room_id = r.id AND m4.username = ?)
     ORDER BY r.created_at ASC, r.name COLLATE NOCASE
-  `, [username, username]).map((row) => ({
+  `, [username]).map((row) => ({
     id: row.id,
     name: row.name,
     createdBy: row.created_by,
-    isPublic: Number(row.is_public) === 1,
     createdAt: row.created_at,
     joined: Number(row.joined) === 1,
     members: Number(row.members || 0),
@@ -894,15 +898,15 @@ function chatRooms(username) {
   }));
 }
 
-function createChatRoom(name, creator, isPublic = true) {
+function createChatRoom(name, creator) {
   const clean = String(name || '').trim().slice(0, 30);
   if (!clean) throw new Error('聊天室名稱不能空白');
   if (!user(creator)) throw new Error('找不到建立者');
   const id = `room_${Date.now()}_${Math.floor(Math.random() * 1e6).toString(36)}`;
   const now = new Date().toISOString();
-  run('INSERT INTO chat_rooms(id, name, created_by, is_public, created_at) VALUES (?, ?, ?, ?, ?)', [id, clean, creator, isPublic ? 1 : 0, now]);
+  run('INSERT INTO chat_rooms(id, name, created_by, created_at) VALUES (?, ?, ?, ?)', [id, clean, creator, now]);
   run('INSERT INTO chat_room_members(room_id, username, joined_at) VALUES (?, ?, ?)', [id, creator, now]);
-  return { id, name: clean, createdBy: creator, isPublic: Boolean(isPublic), createdAt: now, joined: true, members: 1, voiceRoom: true };
+  return { id, name: clean, createdBy: creator, createdAt: now, joined: true, members: 1, voiceRoom: true };
 }
 
 function joinChatRoom(roomId, username) {
@@ -1047,7 +1051,6 @@ module.exports = {
   insertPrivateMessage,
   lobbyHistory,
   privateHistory,
-  privatePeers,
   leaderboard,
   transactions,
   recordGame,
