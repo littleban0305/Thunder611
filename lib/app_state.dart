@@ -1404,7 +1404,6 @@ class ThunderAppState extends ChangeNotifier {
 
   void openPrivate(String target) {
     _activeChatRoomId = null;
-    _activePrivateTarget = target;
     privateMessages.putIfAbsent(target, () => []);
     if (realtimeConnected) {
       realtime.send({'type': 'private.history', 'target': target});
@@ -1500,109 +1499,88 @@ class ThunderAppState extends ChangeNotifier {
     }
   }
 
-  Future<void> sendMedia({
-    required String kind,
-    required String dataBase64,
-    required String ext,
-    String caption = '',
-    String? target,
-    String? roomId,
-  }) async {
-    final url = await _uploadMedia(
-      kind: kind,
-      dataBase64: dataBase64,
-      ext: ext,
-    );
-    if (url == null || !realtimeConnected) return;
-
+  Future<void> sendMedia({required String kind, required String dataBase64, required String ext, String caption = ''}) async {
+    final url = await _uploadMedia(kind: kind, dataBase64: dataBase64, ext: ext);
+    if (url == null) return;
     final clientId = _clientId();
-    final privateTarget = target ?? _activePrivateTarget;
-    final channelRoomId = roomId ?? _activeChatRoomId;
-
-    if (privateTarget != null && privateTarget.isNotEmpty) {
+    if (_activePrivateTarget != null) {
       realtime.send({
         'type': 'private.send',
-        'target': privateTarget,
+        'target': _activePrivateTarget,
         'kind': kind,
         'url': url,
         'text': caption,
         'clientId': clientId,
       });
-      return;
-    }
-
-    if (channelRoomId != null && channelRoomId.isNotEmpty) {
+    } else if (_activeChatRoomId != null) {
       realtime.send({
         'type': 'chat.room.send',
-        'roomId': channelRoomId,
+        'roomId': _activeChatRoomId,
         'kind': kind,
         'url': url,
         'text': caption,
         'clientId': clientId,
       });
-      return;
+    } else {
+      realtime.send({
+        'type': 'chat.send',
+        'kind': kind,
+        'url': url,
+        'text': caption,
+        'clientId': clientId,
+      });
     }
-
-    realtime.send({
-      'type': 'chat.send',
-      'kind': kind,
-      'url': url,
-      'text': caption,
-      'clientId': clientId,
-    });
   }
 
-  void sendSticker(String sticker, {String? target, String? roomId}) {
+  void sendSticker(String sticker) {
     if (!realtimeConnected) return;
     final clean = sticker.trim();
     if (clean.isEmpty) return;
-
-    final privateTarget = target ?? _activePrivateTarget;
-    final channelRoomId = roomId ?? _activeChatRoomId;
-    final clientId = _clientId();
-
-    if (privateTarget != null && privateTarget.isNotEmpty) {
+    if (_activePrivateTarget != null) {
       realtime.send({
         'type': 'private.send',
-        'target': privateTarget,
+        'target': _activePrivateTarget,
         'kind': 'sticker',
         'sticker': clean,
         'text': '',
-        'clientId': clientId,
+        'clientId': _clientId(),
       });
-      return;
-    }
-
-    if (channelRoomId != null && channelRoomId.isNotEmpty) {
+    } else if (_activeChatRoomId != null) {
       realtime.send({
         'type': 'chat.room.send',
-        'roomId': channelRoomId,
+        'roomId': _activeChatRoomId,
         'kind': 'sticker',
         'sticker': clean,
         'text': '',
-        'clientId': clientId,
+        'clientId': _clientId(),
       });
-      return;
+    } else {
+      realtime.send({
+        'type': 'chat.send',
+        'kind': 'sticker',
+        'sticker': clean,
+        'text': '',
+        'clientId': _clientId(),
+      });
     }
-
-    realtime.send({
-      'type': 'chat.send',
-      'kind': 'sticker',
-      'sticker': clean,
-      'text': '',
-      'clientId': clientId,
-    });
   }
 
   void sendGif(String url, {String? target, String? roomId}) {
     final clean = url.trim();
-    if (clean.isEmpty || !realtimeConnected) return;
+    if (clean.isEmpty) {
+      lastActionError = 'GIF 網址為空';
+      notifyListeners();
+      return;
+    }
+    if (!realtimeConnected) {
+      lastActionError = '目前未連線到伺服器';
+      notifyListeners();
+      return;
+    }
 
-    lastActionError = null;
     final privateTarget = target ?? _activePrivateTarget;
-    final channelRoomId = roomId ?? _activeChatRoomId;
+    final activeRoom = roomId ?? _activeChatRoomId;
     final clientId = _clientId();
-
     final payload = {
       'kind': 'gif',
       'url': clean,
@@ -1610,17 +1588,18 @@ class ThunderAppState extends ChangeNotifier {
       'clientId': clientId,
     };
 
-    if (privateTarget != null && privateTarget.isNotEmpty) {
+    lastActionError = null;
+    if (privateTarget != null && privateTarget.trim().isNotEmpty) {
       realtime.send({
         ...payload,
         'type': 'private.send',
         'target': privateTarget,
       });
-    } else if (channelRoomId != null && channelRoomId.isNotEmpty) {
+    } else if (activeRoom != null && activeRoom.trim().isNotEmpty) {
       realtime.send({
         ...payload,
         'type': 'chat.room.send',
-        'roomId': channelRoomId,
+        'roomId': activeRoom,
       });
     } else {
       realtime.send({

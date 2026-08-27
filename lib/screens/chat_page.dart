@@ -96,11 +96,11 @@ class _ChatPageState extends State<ChatPage> {
     _show('正在上傳 ${file.name}…');
     await state.sendMedia(
       kind: isVideo ? 'video' : 'image',
+      target: selectedPrivate,
+      roomId: activeRoomId,
       dataBase64: base64Encode(file.bytes!),
       ext: ext,
       caption: file.name,
-      target: selectedPrivate,
-      roomId: activeRoomId,
     );
     if (!mounted) return;
     final error = state.lastActionError;
@@ -262,7 +262,11 @@ class _ChatPageState extends State<ChatPage> {
                                           return InkWell(
                                             borderRadius: BorderRadius.circular(14),
                                             onTap: () {
-                                              state.sendGif(gif['url']!, target: selectedPrivate, roomId: activeRoomId);
+                                              state.sendGif(
+                                                gif['url']!,
+                                                target: selectedPrivate,
+                                                roomId: activeRoomId,
+                                              );
                                               Navigator.pop(sheetContext);
                                             },
                                             child: ClipRRect(
@@ -326,7 +330,10 @@ class _ChatPageState extends State<ChatPage> {
                     borderRadius: BorderRadius.circular(16),
                     onTap: () {
                       Navigator.pop(context);
-                      state.sendSticker(sticker, target: selectedPrivate, roomId: activeRoomId);
+                      state.sendSticker(
+                        sticker,
+                        target: selectedPrivate,
+                      );
                     },
                     child: Container(
                       width: 58,
@@ -805,24 +812,11 @@ class _ChatPageState extends State<ChatPage> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 14),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 7),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F0F15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-              boxShadow: const [
-                BoxShadow(
-                  blurRadius: 24,
-                  spreadRadius: -12,
-                  offset: Offset(0, 10),
-                  color: Colors.black54,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 520;
+
+              final actions = [
                 IconButton(
                   onPressed: pickMedia,
                   tooltip: '照片／影片',
@@ -848,26 +842,83 @@ class _ChatPageState extends State<ChatPage> {
                   tooltip: '投票',
                   icon: const Icon(Icons.poll_outlined),
                 ),
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    minLines: 1,
-                    maxLines: 3,
-                    onSubmitted: (_) => send(),
-                    decoration: InputDecoration(
-                      hintText: selectedPrivate == null
-                          ? '發送訊息'
-                          : '傳訊給 $selectedPrivate',
-                    ),
+              ];
+
+              final field = TextField(
+                controller: controller,
+                minLines: 1,
+                maxLines: compact ? 4 : 3,
+                onSubmitted: (_) => send(),
+                decoration: InputDecoration(
+                  hintText: selectedPrivate == null
+                      ? '發送訊息'
+                      : '傳訊給 $selectedPrivate',
+                ),
+              );
+
+              final sendButton = IconButton.filled(
+                onPressed: send,
+                tooltip: '發送',
+                icon: const Icon(
+                  Icons.arrow_upward_rounded,
+                ),
+              );
+
+              final shell = Container(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F0F15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.06),
                   ),
+                  boxShadow: const [
+                    BoxShadow(
+                      blurRadius: 24,
+                      spreadRadius: -12,
+                      offset: Offset(0, 10),
+                      color: Colors.black54,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: send,
-                  icon: const Icon(Icons.arrow_upward_rounded),
-                ),
-              ],
-            ),
+                child: compact
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: field),
+                              const SizedBox(width: 6),
+                              sendButton,
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          SizedBox(
+                            height: 44,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  ...actions,
+                                  const SizedBox(width: 2),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          ...actions,
+                          Expanded(child: field),
+                          const SizedBox(width: 8),
+                          sendButton,
+                        ],
+                      ),
+              );
+
+              return shell;
+            },
           ),
         ),
       ],

@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const storage = require('./storage');
 
 const PORT = Number(process.env.PORT || 6110);
-const SERVER_VERSION = '1.0.2';
+const SERVER_VERSION = '1.1.2';
 const path = require('path');
 const fs = require('fs');
 const DATA_DIR = path.join(__dirname, 'data');
@@ -897,7 +897,7 @@ wss.on('connection', (ws) => {
           payload = { sticker: String(event.sticker || '😂').slice(0, 20) };
         } else if (kind === 'gif') {
           const url = String(event.url || '').trim();
-          if (!/^https?:\/\/(?:media(?:\d+)?|i)?\.?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
+          if (!/^https?:\/\/(?:[^/]+\.)?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
           payload = { url: url.slice(0, 1000) };
         }
         if (text.length > 500) throw new Error('訊息太長');
@@ -1012,7 +1012,7 @@ wss.on('connection', (ws) => {
           payload = { sticker: String(event.sticker || '😂').slice(0, 20) };
         } else if (kind === 'gif') {
           const url = String(event.url || '').trim();
-          if (!/^https?:\/\/(?:media(?:\d+)?|i)?\.?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
+          if (!/^https?:\/\/(?:[^/]+\.)?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
           payload = { url: url.slice(0, 1000) };
         }
 

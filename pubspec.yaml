@@ -2,7 +2,7 @@ name: thunder_611
 
 description: 雷霆611｜六年十一班專屬互動基地
 publish_to: 'none'
-version: 1.1.0+15
+version: 1.1.2+17
 
 environment:
   sdk: '>=3.5.0 <4.0.0'

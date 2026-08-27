@@ -127,8 +127,10 @@ flutter run -d android
 flutter run -d windows --dart-define=THUNDER611_GIPHY_KEY=你的GIPHY_API_KEY
 ```
 
-## V1.1.1 Chat Routing Fix
-- 私訊附件、貼圖、GIF 明確帶入 target。
-- 聊天室附件、貼圖、GIF 明確帶入 roomId。
-- openPrivate 會同步設定 active private target。
-- GIF 伺服器驗證允許 GIPHY media/i 網域。
+
+## V1.1.2 Chat fixes
+
+- GIF 傳送改為明確使用目前的大廳／聊天室／私訊目的地。
+- GIF server 網域驗證放寬為正式 giphy.com 子網域。
+- 手機聊天室輸入列改為響應式雙層工具列，避免小螢幕 icon 擠在一起。
+- 圖片／影片媒體傳送同樣顯式帶入目前聊天目的地。
