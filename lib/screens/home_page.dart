@@ -316,8 +316,10 @@ class HomePage extends StatelessWidget {
                             style: const TextStyle(
                                 color: Colors.amber,
                                 fontWeight: FontWeight.w900)),
-                        onTap: () => _memberActions(
-                            context, '${state.leaderboard[i]['name'] ?? ''}'),
+                        onTap: '${state.leaderboard[i]['name'] ?? ''}' == state.username
+                            ? null
+                            : () => _memberActions(
+                                context, '${state.leaderboard[i]['name'] ?? ''}'),
                       ),
                   ],
           ),
@@ -423,6 +425,10 @@ class HomePage extends StatelessWidget {
   }
 
   void _memberActions(BuildContext context, String target) {
+    if (target.trim().isEmpty || target == state.username) {
+      return;
+    }
+
     final isFriend = state.friends.any((f) => f.name == target);
     final hasSteal = (state.inventory['steal'] ?? 0) > 0;
     showModalBottomSheet<void>(

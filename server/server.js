@@ -1388,6 +1388,7 @@ wss.on('connection', (ws) => {
         const kind = String(event.kind || 'text');
         const text = String(event.text || '').trim();
         if (!target || !storage.user(target)) throw new Error('找不到這位成員');
+        if (target === user.username) throw new Error('不能私訊自己');
         if (!['text', 'image', 'video', 'sticker', 'gif'].includes(kind)) throw new Error('不支援的私訊類型');
 
         const existed = storage.hasPrivateConversation(user.username, target);
@@ -1732,6 +1733,7 @@ wss.on('connection', (ws) => {
       try {
         const target = String(event.target || '').trim();
         const amount = Number(event.amount || 0);
+        if (!target || target === user.username) throw new Error('不能轉帳給自己');
         const result = storage.transferCoins(user.username, target, amount);
         user.coins = result.fromBalance;
         ws.send(JSON.stringify({ type: 'wallet.transfer.result', target, amount, coins: result.fromBalance, profile: storage.fullProfile(user.username), transactions: storage.transactions(user.username, 30) }));
@@ -1749,6 +1751,7 @@ wss.on('connection', (ws) => {
     if (type === 'wallet.steal') {
       try {
         const target = String(event.target || '').trim();
+        if (!target || target === user.username) throw new Error('不能偷自己的金幣');
         const result = storage.stealCoins(user.username, target);
         user.coins = result.attackerBalance;
         ws.send(JSON.stringify({ type: 'wallet.steal.result', target, stolen: result.stolen, blocked: result.blocked, profile: storage.fullProfile(user.username), transactions: storage.transactions(user.username, 30) }));

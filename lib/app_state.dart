@@ -1738,6 +1738,7 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void openPrivate(String target) {
+    if (target.trim().isEmpty || target == username) return;
     _activePrivateTarget = target;
     _activeChatRoomId = null;
     privateMessages.putIfAbsent(target, () => []);
@@ -1749,6 +1750,7 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void sendPrivate(String target, String text) {
+    if (target.trim().isEmpty || target == username) return;
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
     final clientId = _clientId();
@@ -2118,7 +2120,7 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void sendFriendRequest(String target) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected || target.trim().isEmpty || target == username) return;
     realtime.send({'type': 'friend.request', 'target': target});
   }
 
@@ -2134,13 +2136,13 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void transferCoins(String target, int amount) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected || target.trim().isEmpty || target == username || amount <= 0) return;
     realtime
         .send({'type': 'wallet.transfer', 'target': target, 'amount': amount});
   }
 
   void stealCoins(String target) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected || target.trim().isEmpty || target == username) return;
     realtime.send({'type': 'wallet.steal', 'target': target});
   }
 
