@@ -13,8 +13,9 @@ import 'voice_room_page.dart';
 
 class ChatPage extends StatefulWidget {
   final ThunderAppState state;
+  final String? initialPrivate;
 
-  const ChatPage({super.key, required this.state});
+  const ChatPage({super.key, required this.state, this.initialPrivate});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -24,9 +25,17 @@ class _ChatPageState extends State<ChatPage> {
   final controller = TextEditingController();
   String? selectedPrivate;
 
+  @override
+  void initState() {
+    super.initState();
+    selectedPrivate = widget.initialPrivate;
+    if (selectedPrivate != null) state.openPrivate(selectedPrivate!);
+  }
+
   ThunderAppState get state => widget.state;
 
-  String? get activeRoomId => selectedPrivate == null ? state.activeChatRoomId : null;
+  String? get activeRoomId =>
+      selectedPrivate == null ? state.activeChatRoomId : null;
 
   List<ChatMessage> get activeMessages {
     if (selectedPrivate != null) {
@@ -164,12 +173,19 @@ class _ChatPageState extends State<ChatPage> {
       }
       setDialog(() => loading = true);
       final endpoint = query.trim().isEmpty
-          ? Uri.parse('https://api.giphy.com/v1/gifs/trending?api_key=$key&limit=24&rating=pg')
-          : Uri.parse('https://api.giphy.com/v1/gifs/search?api_key=$key&q=${Uri.encodeQueryComponent(query.trim())}&limit=24&rating=pg&lang=zh-TW');
+          ? Uri.parse(
+              'https://api.giphy.com/v1/gifs/trending?api_key=$key&limit=24&rating=pg')
+          : Uri.parse(
+              'https://api.giphy.com/v1/gifs/search?api_key=$key&q=${Uri.encodeQueryComponent(query.trim())}&limit=24&rating=pg&lang=zh-TW');
       try {
-        final response = await http.get(endpoint).timeout(const Duration(seconds: 12));
-        final body = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
-        final data = body is Map && body['data'] is List ? body['data'] as List : const [];
+        final response =
+            await http.get(endpoint).timeout(const Duration(seconds: 12));
+        final body = response.body.isEmpty
+            ? <String, dynamic>{}
+            : jsonDecode(response.body);
+        final data = body is Map && body['data'] is List
+            ? body['data'] as List
+            : const [];
         gifs = [];
         for (final item in data) {
           if (item is! Map) continue;
@@ -209,9 +225,13 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       Row(
                         children: [
-                          const Text('GIF', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                          const Text('GIF',
+                              style: TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.w900)),
                           const Spacer(),
-                          IconButton(onPressed: () => Navigator.pop(sheetContext), icon: const Icon(Icons.close_rounded)),
+                          IconButton(
+                              onPressed: () => Navigator.pop(sheetContext),
+                              icon: const Icon(Icons.close_rounded)),
                         ],
                       ),
                       TextField(
@@ -222,7 +242,9 @@ class _ChatPageState extends State<ChatPage> {
                           loadGifs(setDialog);
                         },
                         decoration: InputDecoration(
-                          hintText: key.isEmpty ? '需要設定 GIPHY API Key' : '搜尋 GIF，例如：笑、驚訝、開心',
+                          hintText: key.isEmpty
+                              ? '需要設定 GIPHY API Key'
+                              : '搜尋 GIF，例如：笑、驚訝、開心',
                           prefixIcon: const Icon(Icons.search_rounded),
                           suffixIcon: IconButton(
                             onPressed: key.isEmpty
@@ -247,11 +269,16 @@ class _ChatPageState extends State<ChatPage> {
                                 ),
                               )
                             : loading
-                                ? const Center(child: CircularProgressIndicator())
+                                ? const Center(
+                                    child: CircularProgressIndicator())
                                 : gifs.isEmpty
-                                    ? const Center(child: Text('找不到 GIF', style: TextStyle(color: Colors.white54)))
+                                    ? const Center(
+                                        child: Text('找不到 GIF',
+                                            style: TextStyle(
+                                                color: Colors.white54)))
                                     : GridView.builder(
-                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 3,
                                           crossAxisSpacing: 8,
                                           mainAxisSpacing: 8,
@@ -260,7 +287,8 @@ class _ChatPageState extends State<ChatPage> {
                                         itemBuilder: (_, index) {
                                           final gif = gifs[index];
                                           return InkWell(
-                                            borderRadius: BorderRadius.circular(14),
+                                            borderRadius:
+                                                BorderRadius.circular(14),
                                             onTap: () {
                                               state.sendGif(
                                                 gif['url']!,
@@ -270,8 +298,11 @@ class _ChatPageState extends State<ChatPage> {
                                               Navigator.pop(sheetContext);
                                             },
                                             child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(14),
-                                              child: Image.network(gif['preview']!, fit: BoxFit.cover),
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              child: Image.network(
+                                                  gif['preview']!,
+                                                  fit: BoxFit.cover),
                                             ),
                                           );
                                         },
@@ -279,7 +310,9 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                       const Padding(
                         padding: EdgeInsets.only(top: 6),
-                        child: Text('Powered by GIPHY', style: TextStyle(fontSize: 10, color: Colors.white30)),
+                        child: Text('Powered by GIPHY',
+                            style:
+                                TextStyle(fontSize: 10, color: Colors.white30)),
                       ),
                     ],
                   ),
@@ -434,35 +467,66 @@ class _ChatPageState extends State<ChatPage> {
 
   void _showCreateRoomDialog() {
     final roomController = TextEditingController();
+    var isPublic = true;
+
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('新增聊天室'),
-          content: TextField(
-            controller: roomController,
-            maxLength: 30,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: '聊天室名稱',
-              hintText: '例如：剪片研究所',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final name = roomController.text.trim();
-                if (name.isEmpty) return;
-                state.createChatRoom(name);
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('建立'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('新增聊天室'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: roomController,
+                    maxLength: 30,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      labelText: '聊天室名稱',
+                      hintText: '例如：剪片研究所',
+                    ),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('公開聊天室'),
+                    subtitle: Text(
+                      isPublic ? '會出現在公開列表' : '只能使用聊天室 ID 加入',
+                    ),
+                    value: isPublic,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        isPublic = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('取消'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final name = roomController.text.trim();
+                    if (name.isEmpty) {
+                      return;
+                    }
+                    state.createChatRoom(
+                      name,
+                      isPublic: isPublic,
+                    );
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('建立'),
+                ),
+              ],
+            );
+          },
         );
       },
     ).whenComplete(roomController.dispose);
@@ -504,7 +568,8 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     ),
                     title: Text(name),
-                    subtitle: Text('${room['members'] ?? 0} 人'),
+                    subtitle: Text(
+                        '${room['isPublic'] == true ? '公開' : '私人'} · ID ${room['id']} · ${room['members'] ?? 0} 人'),
                     trailing: FilledButton.tonal(
                       onPressed: joined
                           ? () {
@@ -533,12 +598,52 @@ class _ChatPageState extends State<ChatPage> {
                     label: const Text('新增聊天室'),
                   ),
                 ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      _showJoinRoomDialog();
+                    },
+                    icon: const Icon(Icons.key_rounded),
+                    label: const Text('使用聊天室 ID 加入'),
+                  ),
+                ),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  void _showJoinRoomDialog() {
+    final idController = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('加入聊天室'),
+        content: TextField(
+            controller: idController,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: '聊天室 ID')),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('取消')),
+          FilledButton(
+            onPressed: () {
+              final id = idController.text.trim();
+              if (id.isEmpty) return;
+              state.joinChatRoom(id);
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('加入'),
+          ),
+        ],
+      ),
+    ).whenComplete(idController.dispose);
   }
 
   void _showEditMessage(ChatMessage message) {
@@ -676,7 +781,10 @@ class _ChatPageState extends State<ChatPage> {
                 height: 44,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.14),
                 ),
                 child: Icon(
                   Icons.forum_rounded,
@@ -690,7 +798,8 @@ class _ChatPageState extends State<ChatPage> {
                   children: [
                     Text(
                       activeTitle,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w900),
                     ),
                     Text(
                       selectedPrivate != null
@@ -698,7 +807,8 @@ class _ChatPageState extends State<ChatPage> {
                           : isRoom
                               ? '聊天室 · ${voiceUsers.length} 人語音'
                               : '訊息 · 媒體 · 投票',
-                      style: const TextStyle(fontSize: 11, color: Colors.white38),
+                      style:
+                          const TextStyle(fontSize: 11, color: Colors.white38),
                     ),
                   ],
                 ),
@@ -741,36 +851,36 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
               ...state.chatRooms.where((room) => room['joined'] == true).map(
-                    (room) {
-                      final id = '${room['id'] ?? ''}';
-                      final active = selectedPrivate == null && activeRoomId == id;
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: _ModeChip(
-                          label: '${room['name'] ?? id}',
-                          active: active,
-                          onTap: () {
-                            state.selectChatRoom(id);
-                            setState(() => selectedPrivate = null);
-                          },
-                          onClose: () => state.leaveChatRoom(id),
-                        ),
-                      );
+                (room) {
+                  final id = '${room['id'] ?? ''}';
+                  final active = selectedPrivate == null && activeRoomId == id;
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _ModeChip(
+                      label: '${room['name'] ?? id}',
+                      active: active,
+                      onTap: () {
+                        state.selectChatRoom(id);
+                        setState(() => selectedPrivate = null);
+                      },
+                      onClose: () => state.leaveChatRoom(id),
+                    ),
+                  );
+                },
+              ),
+              ...state.privateMessages.keys.map(
+                (name) => Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: _ModeChip(
+                    label: name,
+                    active: selectedPrivate == name,
+                    onTap: () {
+                      state.openPrivate(name);
+                      setState(() => selectedPrivate = name);
                     },
                   ),
-              ...state.privateMessages.keys.map(
-                    (name) => Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: _ModeChip(
-                        label: name,
-                        active: selectedPrivate == name,
-                        onTap: () {
-                          state.openPrivate(name);
-                          setState(() => selectedPrivate = name);
-                        },
-                      ),
-                    ),
-                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: IconButton.filledTonal(
@@ -837,11 +947,13 @@ class _ChatPageState extends State<ChatPage> {
                   tooltip: '貼圖',
                   icon: const Icon(Icons.auto_awesome_rounded),
                 ),
-                IconButton(
-                  onPressed: createPoll,
-                  tooltip: '投票',
-                  icon: const Icon(Icons.poll_outlined),
-                ),
+                if (selectedPrivate == null)
+                  if (selectedPrivate == null)
+                    IconButton(
+                      onPressed: createPoll,
+                      tooltip: '投票',
+                      icon: const Icon(Icons.poll_outlined),
+                    ),
               ];
 
               final field = TextField(
@@ -850,9 +962,8 @@ class _ChatPageState extends State<ChatPage> {
                 maxLines: compact ? 4 : 3,
                 onSubmitted: (_) => send(),
                 decoration: InputDecoration(
-                  hintText: selectedPrivate == null
-                      ? '發送訊息'
-                      : '傳訊給 $selectedPrivate',
+                  hintText:
+                      selectedPrivate == null ? '發送訊息' : '傳訊給 $selectedPrivate',
                 ),
               );
 
@@ -1025,7 +1136,9 @@ class _ChannelVoiceBanner extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: isBusy ? primary.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
+                color: isBusy
+                    ? primary.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -1066,12 +1179,15 @@ class _ChannelVoiceBanner extends StatelessWidget {
                               child: CircleAvatar(
                                 radius: 13,
                                 backgroundColor: const Color(0xFF24222D),
-                                backgroundImage: '${users[i]['avatarUrl'] ?? ''}'.isEmpty
-                                    ? null
-                                    : NetworkImage(BackendConfig.mediaUrl('${users[i]['avatarUrl']}')),
+                                backgroundImage:
+                                    '${users[i]['avatarUrl'] ?? ''}'.isEmpty
+                                        ? null
+                                        : NetworkImage(BackendConfig.mediaUrl(
+                                            '${users[i]['avatarUrl']}')),
                                 child: '${users[i]['avatarUrl'] ?? ''}'.isEmpty
                                     ? Text(
-                                        '${users[i]['name'] ?? '?'}'.substring(0, 1),
+                                        '${users[i]['name'] ?? '?'}'
+                                            .substring(0, 1),
                                         style: const TextStyle(fontSize: 10),
                                       )
                                     : null,
@@ -1088,9 +1204,11 @@ class _ChannelVoiceBanner extends StatelessWidget {
                   context,
                   PageRouteBuilder(
                     transitionDuration: const Duration(milliseconds: 260),
-                    reverseTransitionDuration: const Duration(milliseconds: 180),
+                    reverseTransitionDuration:
+                        const Duration(milliseconds: 180),
                     pageBuilder: (_, animation, __) => FadeTransition(
-                      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                      opacity: CurvedAnimation(
+                          parent: animation, curve: Curves.easeOut),
                       child: VoiceRoomPage(
                         state: state,
                         roomType: 'channel',
@@ -1108,7 +1226,6 @@ class _ChannelVoiceBanner extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _MessageCard extends StatelessWidget {
@@ -1136,7 +1253,8 @@ class _MessageCard extends StatelessWidget {
           height: 210,
         ),
       'video' => _NetworkVideo(url: '${payload['url'] ?? ''}'),
-      'gif' => _NetworkMedia(url: '${payload['url'] ?? ''}', width: 300, height: 220),
+      'gif' =>
+        _NetworkMedia(url: '${payload['url'] ?? ''}', width: 300, height: 220),
       'sticker' => Text(
           '${payload['sticker'] ?? '😂'}',
           style: const TextStyle(fontSize: 54),
@@ -1155,9 +1273,7 @@ class _MessageCard extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 620),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: mine
-            ? primary.withValues(alpha: 0.16)
-            : const Color(0xFF111117),
+        color: mine ? primary.withValues(alpha: 0.16) : const Color(0xFF111117),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.05),

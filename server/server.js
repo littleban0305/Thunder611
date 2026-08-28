@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const storage = require('./storage');
 
 const PORT = Number(process.env.PORT || 6110);
-const SERVER_VERSION = '1.1.2';
+const SERVER_VERSION = '1.1.3';
 const path = require('path');
 const fs = require('fs');
 const DATA_DIR = path.join(__dirname, 'data');
@@ -253,12 +253,17 @@ function sendToUsername(username, payload) {
   return false;
 }
 function snapshot() {
-  return [...online.values()].map((user) => ({
-    name: user.username,
-    online: true,
-    status: user.status || '在線',
-    coins: user.coins,
-  }));
+  const onlineMap = new Map([...online.values()].map((u) => [u.username, u]));
+  return storage.publicMembers(500).map((member) => {
+    const live = onlineMap.get(member.name);
+    return {
+      name: member.name,
+      online: Boolean(live),
+      status: live?.status || '離線',
+      coins: Number(member.coins || 0),
+      avatarUrl: member.avatarUrl || '',
+    };
+  });
 }
 
 function balanceBroadcast(username, balance) {
@@ -298,8 +303,9 @@ function roleSet(count) {
   const wolves = count >= 8 ? 2 : 1;
   for (let i = 0; i < wolves; i++) roles.push('狼人');
   roles.push('預言家');
-  if (count >= 7) roles.push('守衛');
-  while (roles.length < count) roles.push('村民');
+  if (count >= 6) roles.push('守衛');
+  if (count >= 6) roles.push('獵人');
+  while (roles.length < count) roles.push('平民');
   return roles.sort(() => Math.random() - 0.5);
 }
 
@@ -324,6 +330,7 @@ function publicRoomState(room, viewer) {
       name: p.name,
       alive: p.alive,
       connected: Boolean(p.ws && p.ws.readyState === WebSocket.OPEN),
+      bot: p.bot === true,
       role: (ended || p.name === viewer) ? p.role : null,
     })),
     myRole: me?.role || null,
@@ -346,7 +353,7 @@ function roomListPayload() {
 
 function broadcastRoom(room, type = 'werewolf.state', extra = {}) {
   for (const p of room.players.values()) {
-    if (p.ws.readyState === WebSocket.OPEN) {
+    if (p.ws && p.ws.readyState === WebSocket.OPEN) {
       p.ws.send(JSON.stringify({ type, ...publicRoomState(room, p.name), ...extra }));
     }
   }
@@ -391,7 +398,7 @@ function finishWerewolf(room, winner) {
   room.winner = winner;
   room.messages.push({ sender: '系統', text: `${winner}陣營獲勝。`, time: timeNow() });
   for (const p of room.players.values()) {
-    if (p.ws.readyState !== WebSocket.OPEN) continue;
+    if (p.bot || !p.ws || p.ws.readyState !== WebSocket.OPEN) continue;
     try {
       const won = (winner === '狼人' && p.role === '狼人') || (winner === '村民' && p.role !== '狼人');
       let reward = won ? 500 : 100;
@@ -437,6 +444,94 @@ function startWerewolf(room) {
   room.phase = 'night';
   room.round = 1;
   room.messages.push({ sender: '系統', text: '遊戲開始，現在是第 1 夜。', time: timeNow() });
+  setTimeout(() => runBotNight(room), 2200);
+}
+
+function aliveCandidates(room, predicate = () => true) {
+  return [...room.players.values()].filter((p) => p.alive && predicate(p));
+}
+
+function randomPlayer(players) {
+  return players.length ? players[Math.floor(Math.random() * players.length)] : null;
+}
+
+function runBotNight(room) {
+  if (!room || room.phase !== 'night') return;
+  const alive = aliveCandidates(room);
+  for (const bot of alive.filter((p) => p.bot)) {
+    if (bot.nightAction) continue;
+    if (bot.role === '狼人') {
+      const target = randomPlayer(alive.filter((p) => p.role !== '狼人'));
+      if (target) bot.nightAction = { target: target.name };
+    } else if (bot.role === '預言家') {
+      const target = randomPlayer(alive.filter((p) => p.name !== bot.name));
+      if (target) bot.nightAction = { target: target.name };
+    } else if (bot.role === '守衛') {
+      const target = randomPlayer(alive);
+      if (target) bot.nightAction = { target: target.name };
+    }
+  }
+  if (allNightActionsDone(room)) {
+    resolveNight(room);
+    broadcastRoom(room);
+  } else {
+    broadcastRoom(room);
+  }
+}
+
+function allNightActionsDone(room) {
+  const required = aliveCandidates(room, (p) => ['狼人', '預言家', '守衛'].includes(p.role));
+  return required.length > 0 && required.every((p) => p.nightAction);
+}
+
+function scheduleBotDayTalk(room) {
+  const bots = [...room.players.values()].filter((p) => p.alive && p.bot);
+  bots.forEach((bot, index) => {
+    setTimeout(() => {
+      if (room.phase !== 'day' || !bot.alive) return;
+      const lines = ['我覺得先看投票方向。', '這輪我先聽大家怎麼說。', '有人剛剛的發言很可疑。', '先別急著下結論。'];
+      room.messages.push({ sender: bot.name, text: lines[index % lines.length], time: timeNow() });
+      broadcastRoom(room);
+    }, 1500 + index * 2300);
+  });
+}
+
+function scheduleBotVotes(room) {
+  const bots = [...room.players.values()].filter((p) => p.alive && p.bot);
+  bots.forEach((bot, index) => {
+    setTimeout(() => {
+      if (room.phase !== 'voting' || !bot.alive || bot.vote) return;
+      const candidates = aliveCandidates(room, (p) => p.name !== bot.name);
+      const target = randomPlayer(candidates);
+      if (target) bot.vote = target.name;
+      if (allAliveVoted(room)) resolveVotes(room);
+      broadcastRoom(room);
+    }, 1800 + index * 1800);
+  });
+}
+
+function maybeTriggerHunter(room, eliminated, resumePhase) {
+  if (!eliminated || eliminated.role !== '獵人') return false;
+  const candidates = aliveCandidates(room, (player) => player.name !== eliminated.name);
+  if (candidates.length === 0) return false;
+  if (eliminated.bot) {
+    const target = randomPlayer(candidates);
+    if (target) {
+      target.alive = false;
+      room.messages.push({ sender: eliminated.name, text: `獵人反擊：${target.name} 出局。`, time: timeNow() });
+    }
+    return false;
+  }
+  room.pendingHunter = { name: eliminated.name, resumePhase };
+  room.phase = 'hunter';
+  const targetPlayer = room.players.get(eliminated.name);
+  if (targetPlayer?.ws?.readyState === WebSocket.OPEN) {
+    targetPlayer.ws.send(JSON.stringify({
+      type: 'werewolf.hunter.available',
+      targets: candidates.map((player) => player.name),
+    }));
+  }
+  return true;
 }
 
 function resolveNight(room) {
@@ -462,6 +557,11 @@ function resolveNight(room) {
     time: timeNow(),
   });
 
+  if (killed && maybeTriggerHunter(room, killed, 'day')) {
+    broadcastRoom(room);
+    return;
+  }
+
   const winner = resolveWinner(room);
   if (winner) return finishWerewolf(room, winner);
   room.phase = 'day';
@@ -469,6 +569,7 @@ function resolveNight(room) {
     p.vote = null;
     p.nightAction = null;
   }
+  scheduleBotDayTalk(room);
 }
 
 function resolveVotes(room) {
@@ -482,6 +583,15 @@ function resolveVotes(room) {
   if (top && !tie) {
     eliminated = room.players.get(top[0]);
     if (eliminated) eliminated.alive = false;
+  }
+  if (eliminated && maybeTriggerHunter(room, eliminated, 'night')) {
+    room.messages.push({
+      sender: '系統',
+      text: `${eliminated.name} 出局，獵人可以反擊。`,
+      time: timeNow(),
+    });
+    broadcastRoom(room);
+    return;
   }
   room.messages.push({
     sender: '系統',
@@ -497,6 +607,7 @@ function resolveVotes(room) {
     p.nightAction = null;
   }
   room.messages.push({ sender: '系統', text: `進入第 ${room.round} 夜。`, time: timeNow() });
+  setTimeout(() => runBotNight(room), 2200);
 }
 
 function allAliveVoted(room) {
@@ -515,6 +626,11 @@ const TRUTH_PROMPTS = [
   '最近讓你笑最久的一件小事是什麼？',
   '如果明天可以多放一天假，你最想做什麼？',
   '你現在最想學會的一項技能是什麼？',
+  '如果可以立刻安排一次班級旅行，你會選哪裡？',
+  '你做過最有成就感的一件小事是什麼？',
+  '你覺得自己最容易被誤會的地方是什麼？',
+  '如果今天的心情是一種天氣，會是什麼？',
+  '你最喜歡別人稱讚你的哪一點？',
 ];
 const DARE_PROMPTS = [
   '用三個詞形容你今天的心情。',
@@ -523,6 +639,10 @@ const DARE_PROMPTS = [
   '用一句話替自己的今天下個標題。',
   '用播報員的語氣說「大家晚上好」。',
   '講一句你最近覺得很有梗的話。',
+  '用三十秒介紹一個你最近喜歡的東西。',
+  '請用一句話稱讚右手邊的玩家。',
+  '用三種不同語氣說「今天也要開心」。',
+  '替聊天室想一個很中二的隊名。',
 ];
 
 function truthRoomPlayers(room) {
@@ -549,7 +669,7 @@ function publicTruthRoomState(room, viewer) {
 
 function truthRoomListPayload() {
   return [...truthRooms.values()]
-    .filter((r) => r.phase === 'lobby')
+    .filter((r) => r.phase === 'lobby' || r.phase === 'waiting')
     .map((r) => ({
       roomId: r.id,
       host: r.host,
@@ -560,7 +680,7 @@ function truthRoomListPayload() {
 
 function broadcastTruthRoom(room, type = 'truth.state', extra = {}) {
   for (const p of room.players.values()) {
-    if (p.ws.readyState === WebSocket.OPEN) {
+    if (p.ws && p.ws.readyState === WebSocket.OPEN) {
       p.ws.send(JSON.stringify({ type, ...publicTruthRoomState(room, p.name), ...extra }));
     }
   }
@@ -580,6 +700,7 @@ function leaveTruthRoom(user) {
     room.selected = null;
     room.choice = null;
     room.prompt = null;
+    room.phase = 'waiting';
   }
   if (room.players.size === 0) {
     truthRooms.delete(room.id);
@@ -597,10 +718,11 @@ function leaveTruthRoom(user) {
 
 function drawTruthPlayer(room) {
   if (room.phase === 'ended') return;
-  const candidates = [...room.players.keys()];
+  const candidates = [...room.players.keys()].filter((name) => name !== room.lastSelected);
   if (candidates.length < 2) throw new Error('至少需要 2 人');
   const selected = candidates[Math.floor(Math.random() * candidates.length)];
   room.selected = selected;
+  room.lastSelected = selected;
   room.choice = null;
   room.prompt = null;
   room.phase = 'choose';
@@ -611,9 +733,12 @@ function chooseTruth(room, username, choice) {
   if (room.phase !== 'choose' || room.selected !== username) throw new Error('現在不是你的選擇');
   if (!['truth', 'dare'].includes(choice)) throw new Error('選項無效');
   room.choice = choice;
-  room.prompt = choice === 'truth'
-    ? TRUTH_PROMPTS[Math.floor(Math.random() * TRUTH_PROMPTS.length)]
-    : DARE_PROMPTS[Math.floor(Math.random() * DARE_PROMPTS.length)];
+  const pool = choice === 'truth' ? TRUTH_PROMPTS : DARE_PROMPTS;
+  const available = pool.filter((prompt) => !room.usedPrompts.has(prompt));
+  if (!available.length) room.usedPrompts.clear();
+  const choices = available.length ? available : pool;
+  room.prompt = choices[Math.floor(Math.random() * choices.length)];
+  room.usedPrompts.add(room.prompt);
   room.phase = 'active';
   room.messages.push({ sender: '系統', text: `${username} 選了${choice === 'truth' ? '真心話' : '大冒險'}：${room.prompt}`, time: timeNow() });
 }
@@ -820,6 +945,7 @@ wss.on('connection', (ws) => {
         announcements: storage.announcements(30),
         leaderboard: storage.leaderboard(50),
         voiceRooms: storage.voiceRoomDefs(),
+        privatePeers: storage.privatePeers(username),
         ...socialSnapshot(username),
       }));
       broadcast({ type: 'presence.snapshot', members: snapshot() });
@@ -835,7 +961,7 @@ wss.on('connection', (ws) => {
 
     if (type === 'chat.room.create') {
       try {
-        const room = storage.createChatRoom(String(event.name || ''), user.username);
+        const room = storage.createChatRoom(String(event.name || ''), user.username, event.isPublic !== false);
         broadcastChatRooms();
         ws.send(JSON.stringify({ type: 'chat.room.created', room, requestId: event.requestId || null }));
       } catch (error) {
@@ -897,8 +1023,8 @@ wss.on('connection', (ws) => {
           payload = { sticker: String(event.sticker || '😂').slice(0, 20) };
         } else if (kind === 'gif') {
           const url = String(event.url || '').trim();
-          if (!/^https?:\/\/(?:[^/]+\.)?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
-          payload = { url: url.slice(0, 1000) };
+          if (!url || !/^https?:\/\//i.test(url)) throw new Error('GIF 網址無效');
+          payload = { url };
         }
         if (text.length > 500) throw new Error('訊息太長');
         const message = storage.insertChatRoomMessage(roomId, user.username, text, timeNow(), String(event.clientId || ''), kind, payload);
@@ -967,6 +1093,10 @@ wss.on('connection', (ws) => {
         payload = { url };
       } else if (kind === 'sticker') {
         payload = { sticker: String(event.sticker || '😂').slice(0, 20) };
+      } else if (kind === 'gif') {
+        const url = String(event.url || '').trim();
+        if (!url || !/^https?:\/\//i.test(url)) return;
+        payload = { url };
       } else if (kind === 'poll') {
         const options = Array.isArray(event.options) ? event.options.map((x) => String(x).trim()).filter(Boolean).slice(0, 8) : [];
         if (options.length < 2) { ws.send(JSON.stringify({ type: 'action.error', action: 'chat', error: '投票至少需要 2 個選項' })); return; }
@@ -1003,6 +1133,7 @@ wss.on('connection', (ws) => {
         if (!target || !storage.user(target)) throw new Error('找不到這位成員');
         if (!['text', 'image', 'video', 'sticker', 'gif'].includes(kind)) throw new Error('不支援的私訊類型');
 
+        const existed = storage.hasPrivateConversation(user.username, target);
         let payload = {};
         if (kind === 'image' || kind === 'video') {
           const url = String(event.url || '').trim();
@@ -1012,8 +1143,8 @@ wss.on('connection', (ws) => {
           payload = { sticker: String(event.sticker || '😂').slice(0, 20) };
         } else if (kind === 'gif') {
           const url = String(event.url || '').trim();
-          if (!/^https?:\/\/(?:[^/]+\.)?giphy\.com\//i.test(url)) throw new Error('GIF 網址不合法');
-          payload = { url: url.slice(0, 1000) };
+          if (!url || !/^https?:\/\//i.test(url)) throw new Error('GIF 網址無效');
+          payload = { url };
         }
 
         if (text.length > 500) throw new Error('訊息太長');
@@ -1031,6 +1162,11 @@ wss.on('connection', (ws) => {
 
         sendToUsername(target, { type: 'private.message', ...message });
         ws.send(JSON.stringify({ type: 'private.message', ...message }));
+
+        if (!existed) {
+          storage.addNotification(target, 'private.started', { target: user.username });
+          sendToUsername(target, { type: 'private.started', target: user.username });
+        }
 
         try {
           user.coins = storage.addCoins(user.username, 1, 'private.chat', { target, kind });
@@ -1167,6 +1303,8 @@ wss.on('connection', (ws) => {
           selected: null,
           choice: null,
           prompt: null,
+          lastSelected: null,
+          usedPrompts: new Set(),
           messages: [],
         };
         room.players.set(user.username, { name: user.username, ws });
@@ -1422,6 +1560,7 @@ wss.on('connection', (ws) => {
         const requested = Number(event.maxPlayers || 8);
         if (!Number.isFinite(requested)) throw new Error('房間人數設定無效');
         const maxPlayers = Math.min(10, Math.max(4, Math.trunc(requested)));
+        const botCount = Math.min(Math.max(0, Math.trunc(Number(event.botCount || 0))), maxPlayers - 1);
         const room = {
           id: randomRoomId(),
           host: user.username,
@@ -1440,7 +1579,21 @@ wss.on('connection', (ws) => {
           vote: null,
           nightAction: null,
           inspectResult: null,
+          bot: false,
         });
+        for (let i = 1; i <= botCount; i++) {
+          const botName = `Bot ${i}`;
+          room.players.set(botName, {
+            name: botName,
+            ws: null,
+            role: null,
+            alive: true,
+            vote: null,
+            nightAction: null,
+            inspectResult: null,
+            bot: true,
+          });
+        }
         werewolfRooms.set(room.id, room);
         user.roomId = room.id;
         ws.send(JSON.stringify({
@@ -1478,6 +1631,7 @@ wss.on('connection', (ws) => {
           vote: null,
           nightAction: null,
           inspectResult: null,
+          bot: false,
         });
         user.roomId = room.id;
         broadcastRoom(room, 'werewolf.joined', { requestId: event.requestId || null });
@@ -1539,18 +1693,44 @@ wss.on('connection', (ws) => {
         player.inspectResult = { target, isWolf };
         ws.send(JSON.stringify({ type: 'werewolf.inspect', target, isWolf }));
       }
-      const required = [...room.players.values()].filter((p) => p.alive && ['狼人', '預言家', '守衛'].includes(p.role)).length;
-      const done = [...room.players.values()].filter((p) => p.alive && ['狼人', '預言家', '守衛'].includes(p.role) && p.nightAction).length;
-      if (done >= required) resolveNight(room);
+      if (allNightActionsDone(room)) resolveNight(room);
       broadcastRoom(room);
+      return;
+    }
+
+    if (type === 'werewolf.hunter') {
+      try {
+        const pending = werewolfRooms.get(user.roomId)?.pendingHunter;
+        const room = werewolfRooms.get(user.roomId);
+        const target = String(event.target || '').trim();
+        if (!room || !pending || pending.name !== user.username || room.phase !== 'hunter') throw new Error('現在不能使用獵人技能');
+        const targetPlayer = room.players.get(target);
+        if (!targetPlayer || !targetPlayer.alive || target === user.username) throw new Error('獵人目標無效');
+        targetPlayer.alive = false;
+        room.messages.push({ sender: user.username, text: `獵人反擊：${target} 出局。`, time: timeNow() });
+        const resumePhase = pending.resumePhase || 'night';
+        room.pendingHunter = null;
+        const winner = resolveWinner(room);
+        if (winner) {
+          finishWerewolf(room, winner);
+        } else {
+          room.phase = resumePhase;
+          if (resumePhase === 'day') scheduleBotDayTalk(room);
+          if (resumePhase === 'night') setTimeout(() => runBotNight(room), 600);
+          broadcastRoom(room);
+        }
+      } catch (error) {
+        ws.send(JSON.stringify({ type: 'action.error', action: 'werewolf.hunter', error: error.message }));
+      }
       return;
     }
 
     if (type === 'werewolf.day_next') {
       const room = werewolfRooms.get(user.roomId);
+      if (room?.phase === 'hunter') return;
       if (!room || room.host !== user.username) return;
       if (room.phase === 'night') resolveNight(room);
-      else if (room.phase === 'day') room.phase = 'voting';
+      else if (room.phase === 'day') { room.phase = 'voting'; scheduleBotVotes(room); }
       else if (room.phase === 'voting' && allAliveVoted(room)) resolveVotes(room);
       broadcastRoom(room);
       return;

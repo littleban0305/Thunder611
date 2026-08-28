@@ -55,7 +55,9 @@ class ChatMessage {
         time: '${json['time'] ?? ''}',
         clientId: json['clientId']?.toString(),
         kind: '${json['kind'] ?? 'text'}',
-        payload: json['payload'] is Map ? Map<String, dynamic>.from(json['payload'] as Map) : const {},
+        payload: json['payload'] is Map
+            ? Map<String, dynamic>.from(json['payload'] as Map)
+            : const {},
       );
 }
 
@@ -66,7 +68,13 @@ class MemoryItem {
   final String url;
   final String caption;
   final String time;
-  const MemoryItem({required this.id, required this.uploader, required this.kind, required this.url, required this.caption, required this.time});
+  const MemoryItem(
+      {required this.id,
+      required this.uploader,
+      required this.kind,
+      required this.url,
+      required this.caption,
+      required this.time});
   factory MemoryItem.fromJson(Map<String, dynamic> json) => MemoryItem(
         id: (json['id'] as num?)?.toInt() ?? 0,
         uploader: '${json['uploader'] ?? ''}',
@@ -106,7 +114,8 @@ class TransactionItem {
     required this.time,
   });
 
-  factory TransactionItem.fromJson(Map<String, dynamic> json) => TransactionItem(
+  factory TransactionItem.fromJson(Map<String, dynamic> json) =>
+      TransactionItem(
         kind: '${json['kind'] ?? ''}',
         amount: (json['amount'] as num?)?.toInt() ?? 0,
         balance: (json['balance'] as num?)?.toInt() ?? 0,
@@ -114,16 +123,18 @@ class TransactionItem {
       );
 }
 
-
-
-
 class GameHistoryItem {
   final String gameId;
   final String result;
   final int reward;
   final String time;
-  const GameHistoryItem({required this.gameId, required this.result, required this.reward, required this.time});
-  factory GameHistoryItem.fromJson(Map<String, dynamic> json) => GameHistoryItem(
+  const GameHistoryItem(
+      {required this.gameId,
+      required this.result,
+      required this.reward,
+      required this.time});
+  factory GameHistoryItem.fromJson(Map<String, dynamic> json) =>
+      GameHistoryItem(
         gameId: '${json['gameId'] ?? ''}',
         result: '${json['result'] ?? ''}',
         reward: (json['reward'] as num?)?.toInt() ?? 0,
@@ -136,8 +147,13 @@ class AnnouncementItem {
   final String title;
   final String body;
   final String time;
-  const AnnouncementItem({required this.id, required this.title, required this.body, required this.time});
-  factory AnnouncementItem.fromJson(Map<String, dynamic> json) => AnnouncementItem(
+  const AnnouncementItem(
+      {required this.id,
+      required this.title,
+      required this.body,
+      required this.time});
+  factory AnnouncementItem.fromJson(Map<String, dynamic> json) =>
+      AnnouncementItem(
         id: (json['id'] as num?)?.toInt() ?? 0,
         title: '${json['title'] ?? ''}',
         body: '${json['body'] ?? ''}',
@@ -151,7 +167,11 @@ class FriendInfo {
   final int wins;
   final bool online;
 
-  const FriendInfo({required this.name, required this.coins, required this.wins, required this.online});
+  const FriendInfo(
+      {required this.name,
+      required this.coins,
+      required this.wins,
+      required this.online});
 
   factory FriendInfo.fromJson(Map<String, dynamic> json) => FriendInfo(
         name: '${json['name'] ?? ''}',
@@ -168,7 +188,12 @@ class FriendRequest {
   final String status;
   final String time;
 
-  const FriendRequest({required this.id, required this.sender, required this.target, required this.status, required this.time});
+  const FriendRequest(
+      {required this.id,
+      required this.sender,
+      required this.target,
+      required this.status,
+      required this.time});
 
   factory FriendRequest.fromJson(Map<String, dynamic> json) => FriendRequest(
         id: (json['id'] as num?)?.toInt() ?? 0,
@@ -186,12 +211,20 @@ class SocialNotification {
   final bool read;
   final String time;
 
-  const SocialNotification({required this.id, required this.type, required this.payload, required this.read, required this.time});
+  const SocialNotification(
+      {required this.id,
+      required this.type,
+      required this.payload,
+      required this.read,
+      required this.time});
 
-  factory SocialNotification.fromJson(Map<String, dynamic> json) => SocialNotification(
+  factory SocialNotification.fromJson(Map<String, dynamic> json) =>
+      SocialNotification(
         id: (json['id'] as num?)?.toInt() ?? 0,
         type: '${json['type'] ?? ''}',
-        payload: json['payload'] is Map ? Map<String, dynamic>.from(json['payload'] as Map) : <String, dynamic>{},
+        payload: json['payload'] is Map
+            ? Map<String, dynamic>.from(json['payload'] as Map)
+            : <String, dynamic>{},
         read: json['read'] == true,
         time: '${json['time'] ?? ''}',
       );
@@ -202,12 +235,14 @@ class WerewolfPlayer {
   final bool alive;
   final bool connected;
   final String? role;
+  final bool bot;
 
   const WerewolfPlayer({
     required this.name,
     required this.alive,
     required this.connected,
     this.role,
+    this.bot = false,
   });
 
   factory WerewolfPlayer.fromJson(Map<String, dynamic> json) => WerewolfPlayer(
@@ -215,6 +250,7 @@ class WerewolfPlayer {
         alive: json['alive'] == true,
         connected: json['connected'] == true,
         role: json['role']?.toString(),
+        bot: json['bot'] == true,
       );
 }
 
@@ -229,7 +265,8 @@ class WerewolfRoomMessage {
     required this.time,
   });
 
-  factory WerewolfRoomMessage.fromJson(Map<String, dynamic> json) => WerewolfRoomMessage(
+  factory WerewolfRoomMessage.fromJson(Map<String, dynamic> json) =>
+      WerewolfRoomMessage(
         sender: '${json['sender'] ?? ''}',
         text: '${json['text'] ?? ''}',
         time: '${json['time'] ?? ''}',
@@ -261,7 +298,8 @@ class WerewolfRoomState {
     required this.winner,
   });
 
-  factory WerewolfRoomState.fromJson(Map<String, dynamic> json) => WerewolfRoomState(
+  factory WerewolfRoomState.fromJson(Map<String, dynamic> json) =>
+      WerewolfRoomState(
         roomId: '${json['roomId'] ?? ''}',
         host: '${json['host'] ?? ''}',
         phase: '${json['phase'] ?? 'lobby'}',
@@ -270,7 +308,8 @@ class WerewolfRoomState {
         players: (json['players'] is List)
             ? (json['players'] as List)
                 .whereType<Map>()
-                .map((e) => WerewolfPlayer.fromJson(Map<String, dynamic>.from(e)))
+                .map((e) =>
+                    WerewolfPlayer.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
             : const [],
         myRole: json['myRole']?.toString(),
@@ -278,13 +317,13 @@ class WerewolfRoomState {
         messages: (json['messages'] is List)
             ? (json['messages'] as List)
                 .whereType<Map>()
-                .map((e) => WerewolfRoomMessage.fromJson(Map<String, dynamic>.from(e)))
+                .map((e) =>
+                    WerewolfRoomMessage.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
             : const [],
         winner: json['winner']?.toString(),
       );
 }
-
 
 class TruthRoomPlayer {
   final String name;
@@ -297,7 +336,8 @@ class TruthRoomPlayer {
     required this.selected,
   });
 
-  factory TruthRoomPlayer.fromJson(Map<String, dynamic> json) => TruthRoomPlayer(
+  factory TruthRoomPlayer.fromJson(Map<String, dynamic> json) =>
+      TruthRoomPlayer(
         name: '${json['name'] ?? ''}',
         connected: json['connected'] == true,
         selected: json['selected'] == true,
@@ -315,7 +355,8 @@ class TruthRoomMessage {
     required this.time,
   });
 
-  factory TruthRoomMessage.fromJson(Map<String, dynamic> json) => TruthRoomMessage(
+  factory TruthRoomMessage.fromJson(Map<String, dynamic> json) =>
+      TruthRoomMessage(
         sender: '${json['sender'] ?? ''}',
         text: '${json['text'] ?? ''}',
         time: '${json['time'] ?? ''}',
@@ -353,7 +394,8 @@ class TruthRoomState {
         players: (json['players'] is List)
             ? (json['players'] as List)
                 .whereType<Map>()
-                .map((e) => TruthRoomPlayer.fromJson(Map<String, dynamic>.from(e)))
+                .map((e) =>
+                    TruthRoomPlayer.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
             : const [],
         selected: json['selected']?.toString(),
@@ -362,7 +404,8 @@ class TruthRoomState {
         messages: (json['messages'] is List)
             ? (json['messages'] as List)
                 .whereType<Map>()
-                .map((e) => TruthRoomMessage.fromJson(Map<String, dynamic>.from(e)))
+                .map((e) =>
+                    TruthRoomMessage.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
             : const [],
       );
@@ -385,15 +428,7 @@ class ThunderAppState extends ChangeNotifier {
       ),
       ChatMessage(sender: username, text: '狼人殺我可以', time: _time(now)),
     ];
-    privateMessages = {
-      '小明': [
-        ChatMessage(sender: '小明', text: '晚上八點語音？', time: '19:42'),
-        ChatMessage(sender: username, text: '可以', time: '19:44'),
-      ],
-      '阿偉': [
-        ChatMessage(sender: '阿偉', text: '你有空再叫我', time: '昨天'),
-      ],
-    };
+    privateMessages = {};
     _restore();
   }
 
@@ -431,6 +466,8 @@ class ThunderAppState extends ChangeNotifier {
   List<Map<String, dynamic>> werewolfRooms = const [];
   String? werewolfInspectTarget;
   bool? werewolfInspectIsWolf;
+  bool werewolfHunterAvailable = false;
+  List<String> werewolfHunterTargets = const [];
   String? lastActionError;
   final Set<String> itemBusy = <String>{};
   bool werewolfBusy = false;
@@ -446,20 +483,18 @@ class ThunderAppState extends ChangeNotifier {
   List<MemoryItem> memories = const [];
   List<Map<String, dynamic>> adminUsers = const [];
 
-  List<Member> members = const [
-    Member(name: '小明', online: true, status: '遊戲中', coins: 2430),
-    Member(name: '阿偉', online: true, status: '在線', coins: 1910),
-    Member(name: '小華', online: false, status: '離線', coins: 860),
-    Member(name: '阿翔', online: true, status: '語音房', coins: 3180),
-    Member(name: '小婷', online: false, status: '離線', coins: 1260),
-  ];
+  List<Member> members = const [];
 
   final shopItems = const [
-    ShopItem(id: 'steal', name: '偷金幣卡', icon: '🕵️', effect: '偷取 5%～15%', cost: 800),
-    ShopItem(id: 'shield', name: '防盜護盾', icon: '🛡️', effect: '擋 1 次偷取', cost: 700),
-    ShopItem(id: 'scan', name: '身份探測器', icon: '🔍', effect: '獲得模糊提示', cost: 1500),
+    ShopItem(
+        id: 'steal', name: '偷金幣卡', icon: '🕵️', effect: '偷取 5%～15%', cost: 800),
+    ShopItem(
+        id: 'shield', name: '防盜護盾', icon: '🛡️', effect: '擋 1 次偷取', cost: 700),
+    ShopItem(
+        id: 'scan', name: '身份探測器', icon: '🔍', effect: '獲得模糊提示', cost: 1500),
     ShopItem(id: 'dice', name: '幸運骰子', icon: '🎲', effect: '隨機金幣', cost: 600),
-    ShopItem(id: 'magnet', name: '金幣磁鐵', icon: '🧲', effect: '獎勵 +30%', cost: 1000),
+    ShopItem(
+        id: 'magnet', name: '金幣磁鐵', icon: '🧲', effect: '獎勵 +30%', cost: 1000),
     ShopItem(id: 'box', name: '神秘箱', icon: '🎁', effect: '隨機道具', cost: 500),
   ];
 
@@ -539,6 +574,7 @@ class ThunderAppState extends ChangeNotifier {
         token: token,
         onEvent: _handleRealtimeEvent,
         onBinary: voice.handleBinary,
+        onConnectionChanged: _handleConnectionChanged,
       );
       realtimeConnected = true;
       notifyListeners();
@@ -547,6 +583,16 @@ class ThunderAppState extends ChangeNotifier {
       itemBusy.clear();
       notifyListeners();
     }
+  }
+
+  void _handleConnectionChanged(bool connected) {
+    realtimeConnected = connected;
+    if (!connected) {
+      itemBusy.clear();
+      werewolfBusy = false;
+      truthBusy = false;
+    }
+    notifyListeners();
   }
 
   void _handleRealtimeEvent(Map<String, dynamic> event) {
@@ -580,21 +626,50 @@ class ThunderAppState extends ChangeNotifier {
       }
       final rawChatRooms = event['chatRooms'];
       if (rawChatRooms is List) {
-        chatRooms = rawChatRooms.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        chatRooms = rawChatRooms
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      final rawPrivatePeers = event['privatePeers'];
+      if (rawPrivatePeers is List) {
+        for (final peer in rawPrivatePeers) {
+          final name = '$peer'.trim();
+          if (name.isNotEmpty && name != username)
+            privateMessages.putIfAbsent(name, () => []);
+        }
       }
 
       _applyMembers(event['members']);
       final rawMemories = event['memories'];
-      if (rawMemories is List) memories = rawMemories.whereType<Map>().map((e) => MemoryItem.fromJson(Map<String, dynamic>.from(e))).toList();
+      if (rawMemories is List)
+        memories = rawMemories
+            .whereType<Map>()
+            .map((e) => MemoryItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       final rawAnnouncements = event['announcements'];
-      if (rawAnnouncements is List) announcements = rawAnnouncements.whereType<Map>().map((e) => AnnouncementItem.fromJson(Map<String, dynamic>.from(e))).toList();
+      if (rawAnnouncements is List)
+        announcements = rawAnnouncements
+            .whereType<Map>()
+            .map((e) => AnnouncementItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       final rawLeaderboard = event['leaderboard'];
-      if (rawLeaderboard is List) leaderboard = rawLeaderboard.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (rawLeaderboard is List)
+        leaderboard = rawLeaderboard
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       final rawVoiceRooms = event['voiceRooms'];
-      if (rawVoiceRooms is List) voiceRooms = rawVoiceRooms.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (rawVoiceRooms is List)
+        voiceRooms = rawVoiceRooms
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       _applyTransactions(event['transactions']);
       _applyGameHistory(event['gameHistory']);
-      if (event['werewolfStats'] is Map) werewolfStats = Map<String, dynamic>.from(event['werewolfStats'] as Map);
+      if (event['werewolfStats'] is Map)
+        werewolfStats =
+            Map<String, dynamic>.from(event['werewolfStats'] as Map);
       chatCount = (event['chatCount'] as num?)?.toInt() ?? chatCount;
       _applySocial(event);
       loadCommunityData();
@@ -605,24 +680,41 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'memories') {
       final raw = event['memories'];
-      if (raw is List) memories = raw.whereType<Map>().map((e) => MemoryItem.fromJson(Map<String, dynamic>.from(e))).toList();
+      if (raw is List)
+        memories = raw
+            .whereType<Map>()
+            .map((e) => MemoryItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       notifyListeners();
       return;
     }
     if (type == 'memory.added') {
       final raw = event['memory'];
-      if (raw is Map) memories = [MemoryItem.fromJson(Map<String, dynamic>.from(raw)), ...memories];
+      if (raw is Map)
+        memories = [
+          MemoryItem.fromJson(Map<String, dynamic>.from(raw)),
+          ...memories
+        ];
       notifyListeners();
       return;
     }
     if (type == 'chat.poll.updated') {
       final id = (event['messageId'] as num?)?.toInt();
       if (id != null) {
-        final index = chatMessages.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
+        final index = chatMessages
+            .indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
         if (index >= 0) {
           final old = chatMessages[index];
-          final payload = event['payload'] is Map ? Map<String, dynamic>.from(event['payload'] as Map) : old.payload;
-          chatMessages[index] = ChatMessage(sender: old.sender, text: old.text, time: old.time, clientId: old.clientId, kind: old.kind, payload: payload..['id'] = id);
+          final payload = event['payload'] is Map
+              ? Map<String, dynamic>.from(event['payload'] as Map)
+              : old.payload;
+          chatMessages[index] = ChatMessage(
+              sender: old.sender,
+              text: old.text,
+              time: old.time,
+              clientId: old.clientId,
+              kind: old.kind,
+              payload: payload..['id'] = id);
         }
       }
       notifyListeners();
@@ -630,7 +722,11 @@ class ThunderAppState extends ChangeNotifier {
     }
     if (type == 'chat.rooms') {
       final raw = event['rooms'];
-      if (raw is List) chatRooms = raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (raw is List)
+        chatRooms = raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       notifyListeners();
       return;
     }
@@ -639,7 +735,10 @@ class ThunderAppState extends ChangeNotifier {
       final raw = event['room'];
       if (raw is Map) {
         final room = Map<String, dynamic>.from(raw);
-        chatRooms = [...chatRooms.where((r) => '${r['id']}' != '${room['id']}'), room];
+        chatRooms = [
+          ...chatRooms.where((r) => '${r['id']}' != '${room['id']}'),
+          room
+        ];
         _activePrivateTarget = null;
         _activeChatRoomId = '${room['id']}';
         channelMessages.putIfAbsent(_activeChatRoomId!, () => []);
@@ -652,9 +751,16 @@ class ThunderAppState extends ChangeNotifier {
       final roomId = '${event['roomId'] ?? ''}';
       final raw = event['messages'];
       if (roomId.isNotEmpty && raw is List) {
-        channelMessages[roomId] = raw.whereType<Map>().map((e) => ChatMessage.fromJson(Map<String, dynamic>.from(e))).toList();
+        channelMessages[roomId] = raw
+            .whereType<Map>()
+            .map((e) => ChatMessage.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       }
-      chatRooms = chatRooms.map((room) => room['id']?.toString() == roomId ? {...room, 'joined': true} : room).toList();
+      chatRooms = chatRooms
+          .map((room) => room['id']?.toString() == roomId
+              ? {...room, 'joined': true}
+              : room)
+          .toList();
       _activePrivateTarget = null;
       _activeChatRoomId = roomId;
       notifyListeners();
@@ -666,7 +772,11 @@ class ThunderAppState extends ChangeNotifier {
       channelMessages.remove(roomId);
       channelVoiceUsers.remove(roomId);
       if (_activeChatRoomId == roomId) _activeChatRoomId = null;
-      chatRooms = chatRooms.map((room) => room['id']?.toString() == roomId ? {...room, 'joined': false} : room).toList();
+      chatRooms = chatRooms
+          .map((room) => room['id']?.toString() == roomId
+              ? {...room, 'joined': false}
+              : room)
+          .toList();
       notifyListeners();
       return;
     }
@@ -675,7 +785,10 @@ class ThunderAppState extends ChangeNotifier {
       final roomId = '${event['roomId'] ?? ''}';
       final raw = event['messages'];
       if (roomId.isNotEmpty && raw is List) {
-        channelMessages[roomId] = raw.whereType<Map>().map((e) => ChatMessage.fromJson(Map<String, dynamic>.from(e))).toList();
+        channelMessages[roomId] = raw
+            .whereType<Map>()
+            .map((e) => ChatMessage.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       }
       notifyListeners();
       return;
@@ -685,38 +798,60 @@ class ThunderAppState extends ChangeNotifier {
       final roomId = '${event['roomId'] ?? ''}';
       if (roomId.isEmpty) return;
       final rawPayload = event['payload'];
-      final payload = rawPayload is Map ? Map<String, dynamic>.from(rawPayload) : <String, dynamic>{};
+      final payload = rawPayload is Map
+          ? Map<String, dynamic>.from(rawPayload)
+          : <String, dynamic>{};
       final id = (event['id'] as num?)?.toInt();
       if (id != null) payload['id'] = id;
-      final message = ChatMessage(sender: '${event['sender'] ?? ''}', text: '${event['text'] ?? ''}', time: '${event['time'] ?? ''}', clientId: event['clientId']?.toString(), kind: '${event['kind'] ?? 'text'}', payload: payload);
+      final message = ChatMessage(
+          sender: '${event['sender'] ?? ''}',
+          text: '${event['text'] ?? ''}',
+          time: '${event['time'] ?? ''}',
+          clientId: event['clientId']?.toString(),
+          kind: '${event['kind'] ?? 'text'}',
+          payload: payload);
       final list = channelMessages.putIfAbsent(roomId, () => []);
-      if (message.clientId == null || !list.any((m) => m.clientId == message.clientId)) list.add(message);
+      if (message.clientId == null ||
+          !list.any((m) => m.clientId == message.clientId)) list.add(message);
       notifyListeners();
       return;
     }
 
-    if (type == 'chat.message.updated' || type == 'chat.room.message.updated' || type == 'private.message.updated') {
+    if (type == 'chat.message.updated' ||
+        type == 'chat.room.message.updated' ||
+        type == 'private.message.updated') {
       final id = (event['id'] as num?)?.toInt();
       if (id == null) return;
       final newText = '${event['text'] ?? ''}';
-      final payload = event['payload'] is Map ? Map<String, dynamic>.from(event['payload'] as Map) : <String, dynamic>{};
+      final payload = event['payload'] is Map
+          ? Map<String, dynamic>.from(event['payload'] as Map)
+          : <String, dynamic>{};
       payload['id'] = id;
       payload['edited'] = true;
-      ChatMessage replace(ChatMessage old) => ChatMessage(sender: old.sender, text: newText, time: old.time, clientId: old.clientId, kind: old.kind, payload: payload);
+      ChatMessage replace(ChatMessage old) => ChatMessage(
+          sender: old.sender,
+          text: newText,
+          time: old.time,
+          clientId: old.clientId,
+          kind: old.kind,
+          payload: payload);
       if (type == 'chat.message.updated') {
-        final i = chatMessages.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
+        final i = chatMessages
+            .indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
         if (i >= 0) chatMessages[i] = replace(chatMessages[i]);
       } else if (type == 'private.message.updated') {
         for (final key in privateMessages.keys.toList()) {
           final list = privateMessages[key]!;
-          final i = list.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
+          final i =
+              list.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
           if (i >= 0) list[i] = replace(list[i]);
         }
       } else {
         final roomId = '${event['roomId'] ?? ''}';
         final list = channelMessages[roomId];
         if (list != null) {
-          final i = list.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
+          final i =
+              list.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
           if (i >= 0) list[i] = replace(list[i]);
         }
       }
@@ -724,19 +859,28 @@ class ThunderAppState extends ChangeNotifier {
       return;
     }
 
-    if (type == 'chat.message.deleted' || type == 'chat.room.message.deleted' || type == 'private.message.deleted') {
+    if (type == 'chat.message.deleted' ||
+        type == 'chat.room.message.deleted' ||
+        type == 'private.message.deleted') {
       final id = (event['id'] as num?)?.toInt();
       if (id == null) return;
       if (type == 'chat.message.deleted') {
-        chatMessages = chatMessages.where((m) => (m.payload['id'] as num?)?.toInt() != id).toList();
+        chatMessages = chatMessages
+            .where((m) => (m.payload['id'] as num?)?.toInt() != id)
+            .toList();
       } else if (type == 'private.message.deleted') {
         for (final key in privateMessages.keys.toList()) {
-          privateMessages[key] = privateMessages[key]!.where((m) => (m.payload['id'] as num?)?.toInt() != id).toList();
+          privateMessages[key] = privateMessages[key]!
+              .where((m) => (m.payload['id'] as num?)?.toInt() != id)
+              .toList();
         }
       } else {
         final roomId = '${event['roomId'] ?? ''}';
         final list = channelMessages[roomId];
-        if (list != null) channelMessages[roomId] = list.where((m) => (m.payload['id'] as num?)?.toInt() != id).toList();
+        if (list != null)
+          channelMessages[roomId] = list
+              .where((m) => (m.payload['id'] as num?)?.toInt() != id)
+              .toList();
       }
       notifyListeners();
       return;
@@ -746,7 +890,10 @@ class ThunderAppState extends ChangeNotifier {
       final roomId = '${event['roomId'] ?? ''}';
       final rawUsers = event['users'];
       if (roomId.isNotEmpty && rawUsers is List) {
-        channelVoiceUsers[roomId] = rawUsers.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        channelVoiceUsers[roomId] = rawUsers
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       }
       notifyListeners();
       return;
@@ -755,7 +902,12 @@ class ThunderAppState extends ChangeNotifier {
     if (type == 'notification') {
       final raw = event['notification'];
       if (raw is Map) {
-        final n = SocialNotification(id: DateTime.now().millisecondsSinceEpoch, type: '${raw['type'] ?? 'notice'}', payload: Map<String, dynamic>.from(raw), read: false, time: _time(DateTime.now()));
+        final n = SocialNotification(
+            id: DateTime.now().millisecondsSinceEpoch,
+            type: '${raw['type'] ?? 'notice'}',
+            payload: Map<String, dynamic>.from(raw),
+            read: false,
+            time: _time(DateTime.now()));
         notifications = [n, ...notifications];
         lastNotificationText = _notificationText(n);
       }
@@ -770,7 +922,11 @@ class ThunderAppState extends ChangeNotifier {
     }
     if (type == 'admin.users') {
       final raw = event['users'];
-      if (raw is List) adminUsers = raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (raw is List)
+        adminUsers = raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       notifyListeners();
       return;
     }
@@ -808,8 +964,8 @@ class ThunderAppState extends ChangeNotifier {
     if (type == 'chat.message') {
       final rawPayload = event['payload'];
       final payload = rawPayload is Map
-        ? Map<String, dynamic>.from(rawPayload)
-        : <String, dynamic>{};
+          ? Map<String, dynamic>.from(rawPayload)
+          : <String, dynamic>{};
       final id = (event['id'] as num?)?.toInt();
       if (id != null) payload['id'] = id;
       final message = ChatMessage(
@@ -841,7 +997,9 @@ class ThunderAppState extends ChangeNotifier {
         time: '${event['time'] ?? ''}',
         clientId: event['clientId']?.toString(),
         kind: '${event['kind'] ?? 'text'}',
-        payload: event['payload'] is Map ? Map<String, dynamic>.from(event['payload'] as Map) : const {},
+        payload: event['payload'] is Map
+            ? Map<String, dynamic>.from(event['payload'] as Map)
+            : const {},
       );
       privateMessages.putIfAbsent(peer, () => []);
       if (message.clientId == null ||
@@ -862,6 +1020,17 @@ class ThunderAppState extends ChangeNotifier {
             .whereType<Map>()
             .map((e) => ChatMessage.fromJson(Map<String, dynamic>.from(e)))
             .toList();
+        _persist();
+        notifyListeners();
+      }
+      return;
+    }
+
+    if (type == 'private.started') {
+      final peer = '${event['target'] ?? ''}';
+      if (peer.isNotEmpty && peer != username) {
+        privateMessages.putIfAbsent(peer, () => []);
+        lastNotificationText = '$peer 開始了與你的私訊';
         _persist();
         notifyListeners();
       }
@@ -913,7 +1082,6 @@ class ThunderAppState extends ChangeNotifier {
       return;
     }
 
-
     if (type == 'social.snapshot') {
       _applySocial(event);
       notifyListeners();
@@ -922,13 +1090,21 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'leaderboard') {
       final raw = event['members'];
-      if (raw is List) leaderboard = raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (raw is List)
+        leaderboard = raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       notifyListeners();
       return;
     }
     if (type == 'announcements') {
       final raw = event['announcements'];
-      if (raw is List) announcements = raw.whereType<Map>().map((e) => AnnouncementItem.fromJson(Map<String, dynamic>.from(e))).toList();
+      if (raw is List)
+        announcements = raw
+            .whereType<Map>()
+            .map((e) => AnnouncementItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       notifyListeners();
       return;
     }
@@ -939,7 +1115,11 @@ class ThunderAppState extends ChangeNotifier {
     }
     if (type == 'voice.rooms') {
       final raw = event['rooms'];
-      if (raw is List) voiceRooms = raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      if (raw is List)
+        voiceRooms = raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       notifyListeners();
       return;
     }
@@ -954,13 +1134,17 @@ class ThunderAppState extends ChangeNotifier {
         } else if (kind == 'friend.accepted') {
           lastNotificationText = '${map['friend'] ?? ''} 接受了好友邀請';
         } else if (kind == 'werewolf.invite') {
-          lastNotificationText = '${map['host'] ?? ''} 邀請你加入狼人殺房間 ${map['roomId'] ?? ''}';
+          lastNotificationText =
+              '${map['host'] ?? ''} 邀請你加入狼人殺房間 ${map['roomId'] ?? ''}';
         } else if (kind == 'truth.invite') {
-          lastNotificationText = '${map['host'] ?? ''} 邀請你加入真心話大冒險房間 ${map['roomId'] ?? ''}';
+          lastNotificationText =
+              '${map['host'] ?? ''} 邀請你加入真心話大冒險房間 ${map['roomId'] ?? ''}';
         } else if (kind == 'wallet.received') {
-          lastNotificationText = '${map['sender'] ?? ''} 轉了 ${map['amount'] ?? 0} 金幣給你';
+          lastNotificationText =
+              '${map['sender'] ?? ''} 轉了 ${map['amount'] ?? 0} 金幣給你';
         } else if (kind == 'wallet.stolen') {
-          lastNotificationText = '${map['attacker'] ?? ''} 偷走了 ${map['stolen'] ?? 0} 金幣';
+          lastNotificationText =
+              '${map['attacker'] ?? ''} 偷走了 ${map['stolen'] ?? 0} 金幣';
         } else if (kind == 'wallet.steal_blocked') {
           lastNotificationText = '${map['attacker'] ?? ''} 想偷你，但護盾擋住了';
         } else {
@@ -980,7 +1164,8 @@ class ThunderAppState extends ChangeNotifier {
     if (type == 'wallet.transfer.result') {
       _applyProfile(event['profile']);
       _applyTransactions(event['transactions']);
-      lastNotificationText = '已轉帳 ${event['amount'] ?? 0} 金幣給 ${event['target'] ?? ''}';
+      lastNotificationText =
+          '已轉帳 ${event['amount'] ?? 0} 金幣給 ${event['target'] ?? ''}';
       _persist();
       notifyListeners();
       return;
@@ -1028,7 +1213,8 @@ class ThunderAppState extends ChangeNotifier {
       } else if (itemId == 'box') {
         lastNotificationText = '神秘箱開出了 ${event['itemGained'] ?? '道具'}';
       } else if (itemId == 'scan') {
-        lastNotificationText = '${event['target'] ?? ''}：${event['isWolf'] == true ? '狼人' : '不是狼人'}';
+        lastNotificationText =
+            '${event['target'] ?? ''}：${event['isWolf'] == true ? '狼人' : '不是狼人'}';
       } else if (event['message'] != null) {
         lastNotificationText = '${event['message']}';
       }
@@ -1037,7 +1223,9 @@ class ThunderAppState extends ChangeNotifier {
       return;
     }
 
-    if (type == 'truth.created' || type == 'truth.joined' || type == 'truth.state') {
+    if (type == 'truth.created' ||
+        type == 'truth.joined' ||
+        type == 'truth.state') {
       truthBusy = false;
       lastActionError = null;
       truthRoom = TruthRoomState.fromJson(event);
@@ -1083,9 +1271,10 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'voice.state') {
       final key = '${event['key'] ?? ''}';
-      final currentKey = voice.active && voice.roomType != null && voice.roomId != null
-          ? '${voice.roomType}:${voice.roomId}'
-          : '';
+      final currentKey =
+          voice.active && voice.roomType != null && voice.roomId != null
+              ? '${voice.roomType}:${voice.roomId}'
+              : '';
       final rawUsers = event['users'];
       if (key.isNotEmpty && key == currentKey && rawUsers is List) {
         voiceUsers = {
@@ -1122,6 +1311,8 @@ class ThunderAppState extends ChangeNotifier {
       if (type == 'werewolf.ended') {
         _applyProfile(event['profile']);
         _applyTransactions(event['transactions']);
+        werewolfHunterAvailable = false;
+        werewolfHunterTargets = const [];
         notifyListeners();
       } else {
         notifyListeners();
@@ -1136,12 +1327,24 @@ class ThunderAppState extends ChangeNotifier {
       return;
     }
 
+    if (type == 'werewolf.hunter.available') {
+      final rawTargets = event['targets'];
+      werewolfHunterTargets = rawTargets is List
+          ? rawTargets.map((e) => '$e').where((e) => e.isNotEmpty).toList()
+          : const [];
+      werewolfHunterAvailable = werewolfHunterTargets.isNotEmpty;
+      notifyListeners();
+      return;
+    }
+
     if (type == 'werewolf.left') {
       werewolfBusy = false;
       lastActionError = null;
       werewolfRoom = null;
       werewolfInspectTarget = null;
       werewolfInspectIsWolf = null;
+      werewolfHunterAvailable = false;
+      werewolfHunterTargets = const [];
       notifyListeners();
       return;
     }
@@ -1164,14 +1367,16 @@ class ThunderAppState extends ChangeNotifier {
   void _applySocial(Map<String, dynamic> raw) {
     final rawFriends = raw['friends'];
     if (rawFriends is List) {
-      final onlineNames = members.where((m) => m.online).map((m) => m.name).toSet();
-      friends = rawFriends
-          .whereType<Map>()
-          .map((e) {
-            final info = FriendInfo.fromJson(Map<String, dynamic>.from(e));
-            return FriendInfo(name: info.name, coins: info.coins, wins: info.wins, online: onlineNames.contains(info.name));
-          })
-          .toList();
+      final onlineNames =
+          members.where((m) => m.online).map((m) => m.name).toSet();
+      friends = rawFriends.whereType<Map>().map((e) {
+        final info = FriendInfo.fromJson(Map<String, dynamic>.from(e));
+        return FriendInfo(
+            name: info.name,
+            coins: info.coins,
+            wins: info.wins,
+            online: onlineNames.contains(info.name));
+      }).toList();
     }
     final rawRequests = raw['requests'];
     if (rawRequests is List) {
@@ -1205,7 +1410,11 @@ class ThunderAppState extends ChangeNotifier {
       final memberMap = {for (final m in members) m.name: m};
       friends = friends.map((friend) {
         final member = memberMap[friend.name];
-        return FriendInfo(name: friend.name, coins: member?.coins ?? friend.coins, wins: friend.wins, online: member?.online ?? false);
+        return FriendInfo(
+            name: friend.name,
+            coins: member?.coins ?? friend.coins,
+            wins: friend.wins,
+            online: member?.online ?? false);
       }).toList();
     }
   }
@@ -1240,7 +1449,10 @@ class ThunderAppState extends ChangeNotifier {
 
   void _applyGameHistory(dynamic raw) {
     if (raw is List) {
-      gameHistory = raw.whereType<Map>().map((e) => GameHistoryItem.fromJson(Map<String, dynamic>.from(e))).toList();
+      gameHistory = raw
+          .whereType<Map>()
+          .map((e) => GameHistoryItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     }
   }
 
@@ -1304,9 +1516,11 @@ class ThunderAppState extends ChangeNotifier {
 
   String? get activeChatRoomId => _activeChatRoomId;
 
-  List<ChatMessage> chatMessagesForRoom(String roomId) => channelMessages[roomId] ?? const [];
+  List<ChatMessage> chatMessagesForRoom(String roomId) =>
+      channelMessages[roomId] ?? const [];
 
-  List<Map<String, dynamic>> voiceUsersForRoom(String roomId) => channelVoiceUsers[roomId] ?? const [];
+  List<Map<String, dynamic>> voiceUsersForRoom(String roomId) =>
+      channelVoiceUsers[roomId] ?? const [];
 
   void selectChatRoom(String roomId) {
     final room = chatRooms.firstWhere(
@@ -1316,26 +1530,38 @@ class ThunderAppState extends ChangeNotifier {
     if (room.isEmpty || room['joined'] != true) return;
     _activePrivateTarget = null;
     _activeChatRoomId = roomId;
-    if (realtimeConnected) realtime.send({'type': 'chat.room.history', 'roomId': roomId});
+    if (realtimeConnected)
+      realtime.send({'type': 'chat.room.history', 'roomId': roomId});
     notifyListeners();
   }
 
-  void createChatRoom(String name) {
+  void createChatRoom(String name, {bool isPublic = true}) {
     if (!realtimeConnected) return;
-    realtime.send({'type': 'chat.room.create', 'name': name.trim(), 'requestId': _clientId()});
+    realtime.send({
+      'type': 'chat.room.create',
+      'name': name.trim(),
+      'isPublic': isPublic,
+      'requestId': _clientId()
+    });
   }
 
   void joinChatRoom(String roomId) {
     if (!realtimeConnected) return;
-    realtime.send({'type': 'chat.room.join', 'roomId': roomId, 'requestId': _clientId()});
+    realtime.send(
+        {'type': 'chat.room.join', 'roomId': roomId, 'requestId': _clientId()});
   }
 
   Future<void> leaveChatRoom(String roomId) async {
-    if (voice.active && voice.roomType == 'channel' && voice.roomId == roomId) await stopVoice();
+    if (voice.active && voice.roomType == 'channel' && voice.roomId == roomId)
+      await stopVoice();
     if (realtimeConnected) {
       realtime.send({'type': 'chat.room.leave', 'roomId': roomId});
     } else {
-      chatRooms = chatRooms.map((room) => room['id']?.toString() == roomId ? {...room, 'joined': false} : room).toList();
+      chatRooms = chatRooms
+          .map((room) => room['id']?.toString() == roomId
+              ? {...room, 'joined': false}
+              : room)
+          .toList();
       channelMessages.remove(roomId);
       if (_activeChatRoomId == roomId) _activeChatRoomId = null;
       notifyListeners();
@@ -1345,30 +1571,60 @@ class ThunderAppState extends ChangeNotifier {
   void sendChatRoom(String roomId, String text) {
     final trimmed = text.trim();
     if (!realtimeConnected || trimmed.isEmpty) return;
-    realtime.send({'type': 'chat.room.send', 'roomId': roomId, 'text': trimmed, 'clientId': _clientId()});
+    realtime.send({
+      'type': 'chat.room.send',
+      'roomId': roomId,
+      'text': trimmed,
+      'clientId': _clientId()
+    });
   }
 
-  void editMessage({required String scope, required int messageId, required String text, String? roomId, String? target}) {
+  void editMessage(
+      {required String scope,
+      required int messageId,
+      required String text,
+      String? roomId,
+      String? target}) {
     if (!realtimeConnected) return;
     final clean = text.trim();
     if (clean.isEmpty) return;
     if (scope == 'lobby') {
-      realtime.send({'type': 'chat.edit', 'messageId': messageId, 'text': clean});
+      realtime
+          .send({'type': 'chat.edit', 'messageId': messageId, 'text': clean});
     } else if (scope == 'room') {
-      realtime.send({'type': 'chat.room.edit', 'roomId': roomId, 'messageId': messageId, 'text': clean});
+      realtime.send({
+        'type': 'chat.room.edit',
+        'roomId': roomId,
+        'messageId': messageId,
+        'text': clean
+      });
     } else if (scope == 'private') {
-      realtime.send({'type': 'private.edit', 'target': target, 'messageId': messageId, 'text': clean});
+      realtime.send({
+        'type': 'private.edit',
+        'target': target,
+        'messageId': messageId,
+        'text': clean
+      });
     }
   }
 
-  void deleteMessage({required String scope, required int messageId, String? roomId, String? target}) {
+  void deleteMessage(
+      {required String scope,
+      required int messageId,
+      String? roomId,
+      String? target}) {
     if (!realtimeConnected) return;
     if (scope == 'lobby') {
       realtime.send({'type': 'chat.delete', 'messageId': messageId});
     } else if (scope == 'room') {
-      realtime.send({'type': 'chat.room.delete', 'roomId': roomId, 'messageId': messageId});
+      realtime.send({
+        'type': 'chat.room.delete',
+        'roomId': roomId,
+        'messageId': messageId
+      });
     } else if (scope == 'private') {
-      realtime.send({'type': 'private.delete', 'target': target, 'messageId': messageId});
+      realtime.send(
+          {'type': 'private.delete', 'target': target, 'messageId': messageId});
     }
   }
 
@@ -1403,6 +1659,7 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void openPrivate(String target) {
+    _activePrivateTarget = target;
     _activeChatRoomId = null;
     privateMessages.putIfAbsent(target, () => []);
     if (realtimeConnected) {
@@ -1458,8 +1715,10 @@ class ThunderAppState extends ChangeNotifier {
     return true;
   }
 
-
-  Future<String?> _uploadMedia({required String kind, required String dataBase64, required String ext}) async {
+  Future<String?> _uploadMedia(
+      {required String kind,
+      required String dataBase64,
+      required String ext}) async {
     lastActionError = null;
     if (!realtimeConnected) {
       lastActionError = '目前沒有連上伺服器';
@@ -1469,21 +1728,29 @@ class ThunderAppState extends ChangeNotifier {
     try {
       final token = await store.currentToken();
       if (token == null || token.isEmpty) throw Exception('登入已失效，請重新登入');
-      final response = await http.post(
-        Uri.parse('${BackendConfig.httpBaseUrl}/api/upload'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'kind': kind,
-          'dataBase64': dataBase64,
-          'ext': ext,
-        }),
-      ).timeout(const Duration(seconds: 45));
-      final decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
-      if (response.statusCode < 200 || response.statusCode >= 300 || decoded is! Map || decoded['url'] == null) {
-        final rawMessage = decoded is Map ? '${decoded['error'] ?? '上傳失敗'}' : '上傳失敗';
+      final response = await http
+          .post(
+            Uri.parse('${BackendConfig.httpBaseUrl}/api/upload'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'kind': kind,
+              'dataBase64': dataBase64,
+              'ext': ext,
+            }),
+          )
+          .timeout(const Duration(seconds: 45));
+      final decoded = response.body.isEmpty
+          ? <String, dynamic>{}
+          : jsonDecode(response.body);
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300 ||
+          decoded is! Map ||
+          decoded['url'] == null) {
+        final rawMessage =
+            decoded is Map ? '${decoded['error'] ?? '上傳失敗'}' : '上傳失敗';
         final message = rawMessage == 'not_found'
             ? '目前連到舊版伺服器，請先關掉舊的 Node/npm 視窗，再重新執行 npm.cmd start'
             : rawMessage == 'media_not_found'
@@ -1522,8 +1789,7 @@ class ThunderAppState extends ChangeNotifier {
     final privateTarget = target ?? _activePrivateTarget;
     final activeRoom = roomId ?? _activeChatRoomId;
 
-    if (privateTarget != null &&
-        privateTarget.trim().isNotEmpty) {
+    if (privateTarget != null && privateTarget.trim().isNotEmpty) {
       realtime.send({
         'type': 'private.send',
         'target': privateTarget,
@@ -1532,8 +1798,7 @@ class ThunderAppState extends ChangeNotifier {
         'text': caption,
         'clientId': clientId,
       });
-    } else if (activeRoom != null &&
-        activeRoom.trim().isNotEmpty) {
+    } else if (activeRoom != null && activeRoom.trim().isNotEmpty) {
       realtime.send({
         'type': 'chat.room.send',
         'roomId': activeRoom,
@@ -1578,15 +1843,13 @@ class ThunderAppState extends ChangeNotifier {
       'clientId': _clientId(),
     };
 
-    if (privateTarget != null &&
-        privateTarget.trim().isNotEmpty) {
+    if (privateTarget != null && privateTarget.trim().isNotEmpty) {
       realtime.send({
         ...payload,
         'type': 'private.send',
         'target': privateTarget,
       });
-    } else if (activeRoom != null &&
-        activeRoom.trim().isNotEmpty) {
+    } else if (activeRoom != null && activeRoom.trim().isNotEmpty) {
       realtime.send({
         ...payload,
         'type': 'chat.room.send',
@@ -1646,16 +1909,25 @@ class ThunderAppState extends ChangeNotifier {
 
   void createPoll(String question, List<String> options) {
     if (!realtimeConnected) return;
-    realtime.send({'type': 'chat.send', 'kind': 'poll', 'text': question, 'options': options, 'clientId': _clientId()});
+    realtime.send({
+      'type': 'chat.send',
+      'kind': 'poll',
+      'text': question,
+      'options': options,
+      'clientId': _clientId()
+    });
   }
 
   void votePoll(int messageId, int option) {
     if (!realtimeConnected) return;
-    realtime.send({'type': 'poll.vote', 'messageId': messageId, 'option': option});
+    realtime
+        .send({'type': 'poll.vote', 'messageId': messageId, 'option': option});
   }
 
-  Future<void> uploadAvatar({required String dataBase64, required String ext}) async {
-    final url = await _uploadMedia(kind: 'avatar', dataBase64: dataBase64, ext: ext);
+  Future<void> uploadAvatar(
+      {required String dataBase64, required String ext}) async {
+    final url =
+        await _uploadMedia(kind: 'avatar', dataBase64: dataBase64, ext: ext);
     if (url == null || !realtimeConnected) return;
     realtime.send({'type': 'profile.avatar.upload', 'url': url});
   }
@@ -1664,24 +1936,67 @@ class ThunderAppState extends ChangeNotifier {
     if (realtimeConnected) realtime.send({'type': 'memory.list'});
   }
 
-  Future<void> addMemory({required String kind, required String dataBase64, required String ext, String caption = ''}) async {
-    final url = await _uploadMedia(kind: 'memory', dataBase64: dataBase64, ext: ext);
+  Future<void> addMemory(
+      {required String kind,
+      required String dataBase64,
+      required String ext,
+      String caption = ''}) async {
+    final url =
+        await _uploadMedia(kind: 'memory', dataBase64: dataBase64, ext: ext);
     if (url == null || !realtimeConnected) return;
-    realtime.send({'type': 'memory.add', 'kind': kind, 'url': url, 'caption': caption});
+    realtime.send(
+        {'type': 'memory.add', 'kind': kind, 'url': url, 'caption': caption});
   }
 
   void loadAdminUsers() {
     if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.users'});
   }
 
-  void adminBan(String target) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.ban', 'target': target}); }
-  void adminUnban(String target) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.unban', 'target': target}); }
-  void adminCreateAnnouncement(String title, String body) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.announcement.create', 'title': title, 'body': body}); }
-  void adminDeleteAnnouncement(int id) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.announcement.delete', 'id': id}); }
-  void adminDeleteMemory(int id) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.memory.delete', 'id': id}); }
-  void adminUpsertVoice(String id, String name, bool locked) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.voice.upsert', 'id': id, 'name': name, 'locked': locked}); }
-  void adminDeleteVoice(String id) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.voice.delete', 'id': id}); }
-  void adminLockVoice(String id, bool locked) { if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.voice.lock', 'id': id, 'locked': locked}); }
+  void adminBan(String target) {
+    if (realtimeConnected && isAdmin)
+      realtime.send({'type': 'admin.ban', 'target': target});
+  }
+
+  void adminUnban(String target) {
+    if (realtimeConnected && isAdmin)
+      realtime.send({'type': 'admin.unban', 'target': target});
+  }
+
+  void adminCreateAnnouncement(String title, String body) {
+    if (realtimeConnected && isAdmin)
+      realtime.send(
+          {'type': 'admin.announcement.create', 'title': title, 'body': body});
+  }
+
+  void adminDeleteAnnouncement(int id) {
+    if (realtimeConnected && isAdmin)
+      realtime.send({'type': 'admin.announcement.delete', 'id': id});
+  }
+
+  void adminDeleteMemory(int id) {
+    if (realtimeConnected && isAdmin)
+      realtime.send({'type': 'admin.memory.delete', 'id': id});
+  }
+
+  void adminUpsertVoice(String id, String name, bool locked) {
+    if (realtimeConnected && isAdmin)
+      realtime.send({
+        'type': 'admin.voice.upsert',
+        'id': id,
+        'name': name,
+        'locked': locked
+      });
+  }
+
+  void adminDeleteVoice(String id) {
+    if (realtimeConnected && isAdmin)
+      realtime.send({'type': 'admin.voice.delete', 'id': id});
+  }
+
+  void adminLockVoice(String id, bool locked) {
+    if (realtimeConnected && isAdmin)
+      realtime.send({'type': 'admin.voice.lock', 'id': id, 'locked': locked});
+  }
 
   String _notificationText(SocialNotification n) {
     final p = n.payload;
@@ -1717,7 +2032,8 @@ class ThunderAppState extends ChangeNotifier {
 
   void respondFriendRequest(int requestId, bool accept) {
     if (!realtimeConnected) return;
-    realtime.send({'type': 'friend.respond', 'requestId': requestId, 'accept': accept});
+    realtime.send(
+        {'type': 'friend.respond', 'requestId': requestId, 'accept': accept});
   }
 
   void removeFriend(String target) {
@@ -1727,7 +2043,8 @@ class ThunderAppState extends ChangeNotifier {
 
   void transferCoins(String target, int amount) {
     if (!realtimeConnected) return;
-    realtime.send({'type': 'wallet.transfer', 'target': target, 'amount': amount});
+    realtime
+        .send({'type': 'wallet.transfer', 'target': target, 'amount': amount});
   }
 
   void stealCoins(String target) {
@@ -1740,12 +2057,20 @@ class ThunderAppState extends ChangeNotifier {
     if (itemBusy.contains(itemId)) return;
     itemBusy.add(itemId);
     notifyListeners();
-    realtime.send({'type': 'wallet.use_item', 'itemId': itemId, if (target != null) 'target': target});
+    realtime.send({
+      'type': 'wallet.use_item',
+      'itemId': itemId,
+      if (target != null) 'target': target
+    });
   }
 
   void inviteToWerewolf(String target) {
     if (!realtimeConnected || werewolfRoom == null) return;
-    realtime.send({'type': 'werewolf.invite', 'target': target, 'roomId': werewolfRoom!.roomId});
+    realtime.send({
+      'type': 'werewolf.invite',
+      'target': target,
+      'roomId': werewolfRoom!.roomId
+    });
   }
 
   void listWerewolfRooms() {
@@ -1753,7 +2078,7 @@ class ThunderAppState extends ChangeNotifier {
     realtime.send({'type': 'werewolf.list'});
   }
 
-  void createWerewolfRoom({int maxPlayers = 8}) {
+  void createWerewolfRoom({int maxPlayers = 8, int botCount = 0}) {
     if (!realtimeConnected || werewolfBusy) return;
     werewolfBusy = true;
     lastActionError = null;
@@ -1761,6 +2086,7 @@ class ThunderAppState extends ChangeNotifier {
     realtime.send({
       'type': 'werewolf.create',
       'maxPlayers': maxPlayers,
+      'botCount': botCount,
       'requestId': _clientId(),
     });
   }
@@ -1770,7 +2096,8 @@ class ThunderAppState extends ChangeNotifier {
     werewolfBusy = true;
     lastActionError = null;
     notifyListeners();
-    realtime.send({'type': 'werewolf.join', 'roomId': roomId, 'requestId': _clientId()});
+    realtime.send(
+        {'type': 'werewolf.join', 'roomId': roomId, 'requestId': _clientId()});
   }
 
   void leaveWerewolfRoom() {
@@ -1800,6 +2127,14 @@ class ThunderAppState extends ChangeNotifier {
   void werewolfVote(String target) {
     if (!realtimeConnected) return;
     realtime.send({'type': 'werewolf.vote', 'target': target});
+  }
+
+  void werewolfHunter(String target) {
+    if (!realtimeConnected || !werewolfHunterAvailable) return;
+    realtime.send({'type': 'werewolf.hunter', 'target': target});
+    werewolfHunterAvailable = false;
+    werewolfHunterTargets = const [];
+    notifyListeners();
   }
 
   void werewolfNextPhase() {
@@ -1834,7 +2169,12 @@ class ThunderAppState extends ChangeNotifier {
   void markNotificationsRead() {
     if (realtimeConnected) realtime.send({'type': 'notifications.read'});
     notifications = notifications
-        .map((n) => SocialNotification(id: n.id, type: n.type, payload: n.payload, read: true, time: n.time))
+        .map((n) => SocialNotification(
+            id: n.id,
+            type: n.type,
+            payload: n.payload,
+            read: true,
+            time: n.time))
         .toList();
     notifyListeners();
   }

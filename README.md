@@ -114,23 +114,9 @@ flutter analyze
 flutter run -d android
 ```
 
-
-## V1.1 聊天 Emoji + GIF
-- 使用 `emoji_picker_flutter` 提供完整 Emoji 選擇器、分類、搜尋與最近使用。
-- 聊天室與私訊支援 GIF 訊息。
-- GIF 搜尋／Trending 使用 GIPHY API，限制 `PG` 評級。
-- 啟動時可用 `--dart-define=THUNDER611_GIPHY_KEY=你的Key` 注入 GIPHY API Key。
-- GIF 訊息以網路 URL 儲存，不把 GIF 檔案塞進 WebSocket。
-
-### GIF 啟動範例
-```powershell
-flutter run -d windows --dart-define=THUNDER611_GIPHY_KEY=你的GIPHY_API_KEY
-```
-
-
-## V1.1.2 Chat fixes
-
-- GIF 傳送改為明確使用目前的大廳／聊天室／私訊目的地。
-- GIF server 網域驗證放寬為正式 giphy.com 子網域。
-- 手機聊天室輸入列改為響應式雙層工具列，避免小螢幕 icon 擠在一起。
-- 圖片／影片媒體傳送同樣顯式帶入目前聊天目的地。
+## V1.1.3
+- 恢復聊天室公開／私人設定與私人房間可見性。
+- 新增私訊對話 peer 同步與新對話通知。
+- 恢復狼人殺 Bot、獵人／平民角色與 Bot 自動夜晚／投票／發言。
+- 修正 SQLite nested transaction 的 persist 行為。
+- GitHub 公開專案不再把 GIPHY API Key 寫死在 run.ps1；請使用 `.env`。

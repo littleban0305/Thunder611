@@ -122,7 +122,8 @@ class _GamesPageState extends State<GamesPage> {
                     const Expanded(
                       child: Text(
                         '真心話大冒險',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.w900),
                       ),
                     ),
                     FilledButton.icon(
@@ -143,7 +144,8 @@ class _GamesPageState extends State<GamesPage> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.25)),
+                      border:
+                          Border.all(color: Colors.red.withValues(alpha: 0.25)),
                     ),
                     child: Text(state.lastActionError!),
                   ),
@@ -177,9 +179,12 @@ class _GamesPageState extends State<GamesPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('房間 ${room['roomId']}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                                  Text('房間 ${room['roomId']}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w900)),
                                   const SizedBox(height: 5),
-                                  Text('${room['players']} / ${room['maxPlayers']}  · 房主 ${room['host']}'),
+                                  Text(
+                                      '${room['players']} / ${room['maxPlayers']}  · 房主 ${room['host']}'),
                                 ],
                               ),
                             ),
@@ -230,15 +235,14 @@ class _GamesPageState extends State<GamesPage> {
                     const Expanded(
                       child: Text(
                         '狼人殺',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.w900),
                       ),
                     ),
                     FilledButton.icon(
                       onPressed: state.werewolfBusy
                           ? null
-                          : () {
-                              state.createWerewolfRoom(maxPlayers: 8);
-                            },
+                          : () => _showCreateWerewolfDialog(context),
                       icon: const Icon(Icons.add_rounded),
                       label: Text(state.werewolfBusy ? '建立中…' : '開房'),
                     ),
@@ -253,7 +257,8 @@ class _GamesPageState extends State<GamesPage> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.25)),
+                      border:
+                          Border.all(color: Colors.red.withValues(alpha: 0.25)),
                     ),
                     child: Text(state.lastActionError!),
                   ),
@@ -287,9 +292,12 @@ class _GamesPageState extends State<GamesPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('房間 ${room['roomId']}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                                  Text('房間 ${room['roomId']}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w900)),
                                   const SizedBox(height: 5),
-                                  Text('${room['players']} / ${room['maxPlayers']}  · 房主 ${room['host']}'),
+                                  Text(
+                                      '${room['players']} / ${room['maxPlayers']}  · Bot ${room['bots'] ?? 0} · 房主 ${room['host']}'),
                                 ],
                               ),
                             ),
@@ -308,6 +316,39 @@ class _GamesPageState extends State<GamesPage> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateWerewolfDialog(BuildContext context) {
+    var botCount = 3;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('建立狼人殺房間'),
+          content: DropdownButtonFormField<int>(
+            initialValue: botCount,
+            decoration: const InputDecoration(labelText: 'Bot 數量'),
+            items: List.generate(
+                8,
+                (index) =>
+                    DropdownMenuItem(value: index, child: Text('$index 個'))),
+            onChanged: (value) => setDialogState(() => botCount = value ?? 0),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('取消')),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                state.createWerewolfRoom(maxPlayers: 8, botCount: botCount);
+              },
+              child: const Text('建立'),
+            ),
+          ],
         ),
       ),
     );
@@ -353,8 +394,11 @@ class _WerewolfRoomView extends StatelessWidget {
           pinned: true,
           title: Row(
             children: [
-              Expanded(child: Text('狼人殺 · ${room.roomId}', style: const TextStyle(fontWeight: FontWeight.w900))),
-              Text('${room.players.length}/${room.maxPlayers}', style: const TextStyle(fontSize: 14, color: Colors.white54)),
+              Expanded(
+                  child: Text('狼人殺 · ${room.roomId}',
+                      style: const TextStyle(fontWeight: FontWeight.w900))),
+              Text('${room.players.length}/${room.maxPlayers}',
+                  style: const TextStyle(fontSize: 14, color: Colors.white54)),
             ],
           ),
           actions: [
@@ -383,16 +427,20 @@ class _WerewolfRoomView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('玩家', style: TextStyle(fontWeight: FontWeight.w900)),
+                    const Text('玩家',
+                        style: TextStyle(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: room.players.map((p) {
-                        final label = p.alive ? p.name : '${p.name} · 出局';
+                        final label =
+                            '${p.name}${p.bot ? ' · Bot' : ''}${p.alive ? '' : ' · 出局'}';
                         return Chip(
                           avatar: Icon(
-                            p.alive ? Icons.person_rounded : Icons.person_off_rounded,
+                            p.alive
+                                ? Icons.person_rounded
+                                : Icons.person_off_rounded,
                             size: 16,
                             color: p.connected ? primary : Colors.white30,
                           ),
@@ -402,7 +450,9 @@ class _WerewolfRoomView extends StatelessWidget {
                     ),
                     if (room.myRole != null) ...[
                       const SizedBox(height: 12),
-                      Text('你的身份：${room.myRole}', style: TextStyle(fontWeight: FontWeight.w900, color: primary)),
+                      Text('你的身份：${room.myRole}',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900, color: primary)),
                     ],
                   ],
                 ),
@@ -424,7 +474,9 @@ class _WerewolfRoomView extends StatelessWidget {
                           const Expanded(child: Text('至少 4 人才能開始')),
                           if (isHost)
                             FilledButton(
-                              onPressed: room.players.length >= 4 ? state.startWerewolf : null,
+                              onPressed: room.players.length >= 4
+                                  ? state.startWerewolf
+                                  : null,
                               child: const Text('開始'),
                             ),
                         ],
@@ -445,16 +497,23 @@ class _WerewolfRoomView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${room.winner} 陣營獲勝', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                      Text('${room.winner} 陣營獲勝',
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
                       const Text('勝者 +500 金幣 · 其他參與者 +100 金幣'),
                     ],
                   ),
                 )
               else ...[
-                _WerewolfActionCard(state: state, room: room, alivePlayers: alivePlayers, isHost: isHost),
+                _WerewolfActionCard(
+                    state: state,
+                    room: room,
+                    alivePlayers: alivePlayers,
+                    isHost: isHost),
                 const SizedBox(height: 12),
-                _WerewolfChatCard(state: state, room: room, controller: messageController),
+                _WerewolfChatCard(
+                    state: state, room: room, controller: messageController),
               ],
             ]),
           ),
@@ -463,9 +522,11 @@ class _WerewolfRoomView extends StatelessWidget {
     );
   }
 
-  static void _showInvites(BuildContext context, ThunderAppState state, WerewolfRoomState room) {
+  static void _showInvites(
+      BuildContext context, ThunderAppState state, WerewolfRoomState room) {
     final existing = room.players.map((p) => p.name).toSet();
-    final targets = state.friends.where((f) => !existing.contains(f.name)).toList();
+    final targets =
+        state.friends.where((f) => !existing.contains(f.name)).toList();
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF111117),
@@ -477,18 +538,22 @@ class _WerewolfRoomView extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(18, 18, 18, 8),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('邀請好友', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                child: Text('邀請好友',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
               ),
             ),
             if (targets.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(24),
-                child: Text('沒有可邀請的好友', style: TextStyle(color: Colors.white54)),
+                child:
+                    Text('沒有可邀請的好友', style: TextStyle(color: Colors.white54)),
               )
             else
               ...targets.map(
                 (friend) => ListTile(
-                  leading: CircleAvatar(child: Text(friend.name.substring(0, 1))),
+                  leading:
+                      CircleAvatar(child: Text(friend.name.substring(0, 1))),
                   title: Text(friend.name),
                   subtitle: Text(friend.online ? '在線' : '離線'),
                   trailing: IconButton(
@@ -533,6 +598,10 @@ class _WerewolfActionCard extends StatelessWidget {
           return '查看一名玩家是否為狼人。';
         case '守衛':
           return '保護一名玩家。';
+        case '獵人':
+          return '你是獵人。若出局可以帶走一名玩家。';
+        case '平民':
+          return '你是平民，透過發言和票型找出狼人。';
         default:
           return '等待其他玩家。';
       }
@@ -546,25 +615,52 @@ class _WerewolfActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = room.myAlive;
     final nightRole = ['狼人', '預言家', '守衛'].contains(room.myRole);
-    final candidates = alivePlayers.where((p) => p.name != state.username).toList();
+    final candidates =
+        alivePlayers.where((p) => p.name != state.username).toList();
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_actionText(), style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(_actionText(),
+              style: const TextStyle(fontWeight: FontWeight.w800)),
           if (active && room.phase == 'night' && nightRole) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: candidates
-                  .map((p) => OutlinedButton(onPressed: () => state.werewolfNight(p.name), child: Text(p.name)))
+                  .map((p) => OutlinedButton(
+                      onPressed: () => state.werewolfNight(p.name),
+                      child: Text(p.name)))
                   .toList(),
             ),
-            if (state.werewolfInspectTarget != null && room.myRole == '預言家') ...[
+            if (state.werewolfInspectTarget != null &&
+                room.myRole == '預言家') ...[
               const SizedBox(height: 10),
-              Text('${state.werewolfInspectTarget}：${state.werewolfInspectIsWolf == true ? '是狼人' : '不是狼人'}'),
+              Text(
+                  '${state.werewolfInspectTarget}：${state.werewolfInspectIsWolf == true ? '是狼人' : '不是狼人'}'),
             ],
+          ],
+          if (state.werewolfHunterAvailable &&
+              state.werewolfHunterTargets.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              '獵人反擊：選一名玩家帶走',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: state.werewolfHunterTargets
+                  .map(
+                    (name) => OutlinedButton(
+                      onPressed: () => state.werewolfHunter(name),
+                      child: Text(name),
+                    ),
+                  )
+                  .toList(),
+            ),
           ],
           if (active && room.phase == 'voting') ...[
             const SizedBox(height: 12),
@@ -572,7 +668,9 @@ class _WerewolfActionCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: candidates
-                  .map((p) => OutlinedButton(onPressed: () => state.werewolfVote(p.name), child: Text('投 ${p.name}')))
+                  .map((p) => OutlinedButton(
+                      onPressed: () => state.werewolfVote(p.name),
+                      child: Text('投 ${p.name}')))
                   .toList(),
             ),
           ],
@@ -626,7 +724,11 @@ class _WerewolfChatCard extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(children: [Icon(Icons.forum_outlined, size: 18), SizedBox(width: 8), Text('討論', style: TextStyle(fontWeight: FontWeight.w900))]),
+            child: Row(children: [
+              Icon(Icons.forum_outlined, size: 18),
+              SizedBox(width: 8),
+              Text('討論', style: TextStyle(fontWeight: FontWeight.w900))
+            ]),
           ),
           SizedBox(
             height: 300,
@@ -640,17 +742,32 @@ class _WerewolfChatCard extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Align(
-                    alignment: system ? Alignment.center : (mine ? Alignment.centerRight : Alignment.centerLeft),
+                    alignment: system
+                        ? Alignment.center
+                        : (mine ? Alignment.centerRight : Alignment.centerLeft),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 9),
                       decoration: BoxDecoration(
-                        color: system ? Colors.white.withValues(alpha: 0.05) : (mine ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.06)),
+                        color: system
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : (mine
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.2)
+                                : Colors.white.withValues(alpha: 0.06)),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
-                        crossAxisAlignment: system || mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                        crossAxisAlignment: system || mine
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
                         children: [
-                          if (!system) Text(m.sender, style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                          if (!system)
+                            Text(m.sender,
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.white54)),
                           Text(m.text),
                         ],
                       ),
@@ -691,7 +808,6 @@ class _WerewolfChatCard extends StatelessWidget {
     );
   }
 }
-
 
 class _TruthRoomView extends StatelessWidget {
   final ThunderAppState state;
@@ -766,21 +882,27 @@ class _TruthRoomView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('玩家', style: TextStyle(fontWeight: FontWeight.w900)),
+                    const Text('玩家',
+                        style: TextStyle(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: room.players.map(
-                        (p) => Chip(
-                          avatar: Icon(
-                            p.selected ? Icons.star_rounded : Icons.person_rounded,
-                            size: 16,
-                            color: p.selected ? Colors.amber : Colors.white70,
-                          ),
-                          label: Text(p.name),
-                        ),
-                      ).toList(),
+                      children: room.players
+                          .map(
+                            (p) => Chip(
+                              avatar: Icon(
+                                p.selected
+                                    ? Icons.star_rounded
+                                    : Icons.person_rounded,
+                                size: 16,
+                                color:
+                                    p.selected ? Colors.amber : Colors.white70,
+                              ),
+                              label: Text(p.name),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
                 ),
@@ -801,7 +923,9 @@ class _TruthRoomView extends StatelessWidget {
                       ),
                       if (isHost)
                         FilledButton.icon(
-                          onPressed: room.players.length >= 2 ? state.drawTruthPlayer : null,
+                          onPressed: room.players.length >= 2
+                              ? state.drawTruthPlayer
+                              : null,
                           icon: const Icon(Icons.casino_rounded),
                           label: const Text('隨機抽人'),
                         ),
@@ -814,9 +938,7 @@ class _TruthRoomView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        selectedMe
-                            ? '抽到你了，選一個：'
-                            : '${room.selected} 正在選擇…',
+                        selectedMe ? '抽到你了，選一個：' : '${room.selected} 正在選擇…',
                         style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 12),
@@ -946,8 +1068,9 @@ class _TruthChatCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
-                        crossAxisAlignment:
-                            system || mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                        crossAxisAlignment: system || mine
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
                         children: [
                           if (!system)
                             Text(
@@ -1010,8 +1133,9 @@ class _VoiceBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inThisRoom =
-        state.voice.active && state.voice.roomType == roomType && state.voice.roomId == roomId;
+    final inThisRoom = state.voice.active &&
+        state.voice.roomType == roomType &&
+        state.voice.roomId == roomId;
 
     return SectionCard(
       child: Column(
@@ -1022,7 +1146,8 @@ class _VoiceBar extends StatelessWidget {
               const Icon(Icons.mic_none_rounded, size: 18),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text('語音', style: TextStyle(fontWeight: FontWeight.w900)),
+                child:
+                    Text('語音', style: TextStyle(fontWeight: FontWeight.w900)),
               ),
               if (inThisRoom)
                 IconButton(
@@ -1113,7 +1238,10 @@ class _GameCard extends StatelessWidget {
               height: 58,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [primary.withValues(alpha: 0.22), primary.withValues(alpha: 0.06)],
+                  colors: [
+                    primary.withValues(alpha: 0.22),
+                    primary.withValues(alpha: 0.06)
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -1124,7 +1252,9 @@ class _GameCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 7),
                   Pill(text: tag),
                 ],
@@ -1133,7 +1263,9 @@ class _GameCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(reward, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w900)),
+                Text(reward,
+                    style: const TextStyle(
+                        color: Colors.amber, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 8),
                 const Icon(Icons.chevron_right_rounded, color: Colors.white38),
               ],

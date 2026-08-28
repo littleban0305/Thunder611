@@ -8,12 +8,14 @@ import 'backend_config.dart';
 
 typedef RealtimeEventHandler = void Function(Map<String, dynamic> event);
 typedef RealtimeBinaryHandler = void Function(Uint8List data);
+typedef RealtimeConnectionHandler = void Function(bool connected);
 
 class RealtimeService {
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   RealtimeEventHandler? _handler;
   RealtimeBinaryHandler? _binaryHandler;
+  RealtimeConnectionHandler? _connectionHandler;
 
   bool get connected => _channel != null;
 
@@ -22,10 +24,12 @@ class RealtimeService {
     required String token,
     required RealtimeEventHandler onEvent,
     RealtimeBinaryHandler? onBinary,
+    RealtimeConnectionHandler? onConnectionChanged,
   }) async {
     disconnect();
     _handler = onEvent;
     _binaryHandler = onBinary;
+    _connectionHandler = onConnectionChanged;
     final channel = WebSocketChannel.connect(Uri.parse(BackendConfig.wsUrl));
     _channel = channel;
 
@@ -46,12 +50,19 @@ class RealtimeService {
           }
         } catch (_) {}
       },
-      onDone: () => _channel = null,
-      onError: (_, __) => _channel = null,
+      onDone: () {
+        _channel = null;
+        _connectionHandler?.call(false);
+      },
+      onError: (_, __) {
+        _channel = null;
+        _connectionHandler?.call(false);
+      },
       cancelOnError: true,
     );
 
     await channel.ready;
+    _connectionHandler?.call(true);
     send({
       'type': 'presence.join',
       'username': username,

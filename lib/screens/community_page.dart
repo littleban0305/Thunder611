@@ -210,8 +210,7 @@ class _CommunityPageState extends State<CommunityPage> {
                 ),
                 child: SectionCard(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
@@ -260,9 +259,7 @@ class _CommunityPageState extends State<CommunityPage> {
               child: _sectionTitle('班級回憶'),
             ),
             FilledButton.tonalIcon(
-              onPressed: state.realtimeConnected
-                  ? addMemory
-                  : null,
+              onPressed: state.realtimeConnected ? addMemory : null,
               icon: const Icon(
                 Icons.add_photo_alternate_outlined,
               ),
@@ -283,10 +280,8 @@ class _CommunityPageState extends State<CommunityPage> {
         else
           GridView.builder(
             shrinkWrap: true,
-            physics:
-                const NeverScrollableScrollPhysics(),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
@@ -327,8 +322,7 @@ class _CommunityPageState extends State<CommunityPage> {
               }
 
               return ClipRRect(
-                borderRadius:
-                    BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
                 child: Container(
                   color: const Color(0xFF111117),
                   child: content,
@@ -361,11 +355,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                 )
               else
-                for (
-                  var i = 0;
-                  i < state.leaderboard.length;
-                  i++
-                )
+                for (var i = 0; i < state.leaderboard.length; i++)
                   ListTile(
                     dense: true,
                     leading: CircleAvatar(
@@ -422,20 +412,15 @@ class _CommunityPageState extends State<CommunityPage> {
           ...state.voiceRooms.map(
             (room) {
               final roomId = '${room['id']}';
-              final roomName =
-                  '${room['name'] ?? roomId}';
-              final userCount =
-                  '${room['users'] ?? 0}';
-              final locked =
-                  room['locked'] == true;
+              final roomName = '${room['name'] ?? roomId}';
+              final userCount = '${room['users'] ?? 0}';
+              final locked = room['locked'] == true;
 
               final inThisRoom =
-                  state.voice.active &&
-                  state.voice.roomId == roomId;
+                  state.voice.active && state.voice.roomId == roomId;
 
               return Padding(
-                padding:
-                    const EdgeInsets.only(
+                padding: const EdgeInsets.only(
                   bottom: 10,
                 ),
                 child: SectionCard(
@@ -447,48 +432,39 @@ class _CommunityPageState extends State<CommunityPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               roomName,
-                              style:
-                                  const TextStyle(
-                                fontWeight:
-                                    FontWeight.w900,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
                             Text(
                               '$userCount 人'
                               '${locked ? ' · 已鎖定' : ''}',
-                              style:
-                                  const TextStyle(
+                              style: const TextStyle(
                                 fontSize: 11,
-                                color:
-                                    Colors.white38,
+                                color: Colors.white38,
                               ),
                             ),
                           ],
                         ),
                       ),
                       FilledButton.tonal(
-                        onPressed:
-                            locked &&
-                                    !state.isAdmin
-                                ? null
-                                : () {
-                                    if (inThisRoom) {
-                                      state.stopVoice();
-                                    } else {
-                                      state.joinGlobalVoice(
-                                        roomId,
-                                      );
-                                    }
-                                  },
+                        onPressed: locked && !state.isAdmin
+                            ? null
+                            : () {
+                                if (inThisRoom) {
+                                  state.stopVoice();
+                                } else {
+                                  state.joinGlobalVoice(
+                                    roomId,
+                                  );
+                                }
+                              },
                         child: Text(
-                          inThisRoom
-                              ? '離開'
-                              : '加入',
+                          inThisRoom ? '離開' : '加入',
                         ),
                       ),
                     ],
@@ -503,9 +479,7 @@ class _CommunityPageState extends State<CommunityPage> {
             child: Row(
               children: [
                 Icon(
-                  state.voice.muted
-                      ? Icons.mic_off_rounded
-                      : Icons.mic_rounded,
+                  state.voice.muted ? Icons.mic_off_rounded : Icons.mic_rounded,
                   color: Colors.greenAccent,
                 ),
                 const SizedBox(width: 8),
@@ -518,12 +492,10 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                 ),
                 IconButton(
-                  onPressed:
-                      state.toggleVoiceMute,
+                  onPressed: state.toggleVoiceMute,
                   icon: Icon(
                     state.voice.muted
-                        ? Icons
-                            .mic_off_rounded
+                        ? Icons.mic_off_rounded
                         : Icons.mic_rounded,
                   ),
                 ),

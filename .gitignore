@@ -9,3 +9,9 @@ lib/generated/
 .idea/
 .vscode/
 *.iml
+.env
+server/data/*.sqlite
+server/data/users.json
+server/node_modules/
+server/data/uploads/*
+!server/data/uploads/.gitkeep
