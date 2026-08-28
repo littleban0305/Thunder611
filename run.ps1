@@ -21,7 +21,7 @@ if ([string]::IsNullOrWhiteSpace($key)) {
     exit 1
 }
 
-Write-Host "Starting Thunder611..." -ForegroundColor Cyan
+Write-Host "Starting Thunder Community / 雷霆社群..." -ForegroundColor Cyan
 
 flutter run `
     --dart-define="THUNDER611_GIPHY_KEY=$key"

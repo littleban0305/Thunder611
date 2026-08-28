@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../widgets/section_card.dart';
-import 'community_page.dart';
 
 class HomePage extends StatelessWidget {
   final ThunderAppState state;
@@ -17,7 +16,9 @@ class HomePage extends StatelessWidget {
         SliverAppBar(
           pinned: true,
           titleSpacing: 20,
-          title: const Text('雷霆611', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: -0.6)),
+          title: const Text('雷霆社群',
+              style:
+                  TextStyle(fontWeight: FontWeight.w900, letterSpacing: -0.6)),
           actions: [
             Stack(
               children: [
@@ -31,7 +32,8 @@ class HomePage extends StatelessWidget {
                     right: 7,
                     top: 7,
                     child: Container(
-                      constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+                      constraints:
+                          const BoxConstraints(minWidth: 17, minHeight: 17),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: const BoxDecoration(
                         color: Colors.redAccent,
@@ -40,7 +42,8 @@ class HomePage extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         '${state.unreadNotificationCount > 9 ? '9+' : state.unreadNotificationCount}',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
+                        style: const TextStyle(
+                            fontSize: 9, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),
@@ -48,7 +51,11 @@ class HomePage extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Center(child: Pill(text: '${state.coins}', icon: Icons.monetization_on_outlined, color: Colors.amber)),
+              child: Center(
+                  child: Pill(
+                      text: '${state.coins}',
+                      icon: Icons.monetization_on_outlined,
+                      color: Colors.amber)),
             ),
           ],
         ),
@@ -60,27 +67,31 @@ class HomePage extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(child: Text(state.username, style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, height: 1))),
-                  Text('6-11', style: TextStyle(color: Colors.white.withValues(alpha: 0.32), fontWeight: FontWeight.w800)),
+                  Expanded(
+                      child: Text(state.username,
+                          style: const TextStyle(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w900,
+                              height: 1))),
                 ],
               ),
               const SizedBox(height: 18),
               Row(
                 children: [
-                  Expanded(child: _QuickCard(icon: Icons.chat_bubble_rounded, title: '聊天', value: '大廳', onTap: () => onGo(1))),
+                  Expanded(
+                      child: _QuickCard(
+                          icon: Icons.chat_bubble_rounded,
+                          title: '聊天',
+                          value: '大廳',
+                          onTap: () => onGo(1))),
                   const SizedBox(width: 12),
-                  Expanded(child: _QuickCard(icon: Icons.sports_esports_rounded, title: '遊戲', value: '開玩', onTap: () => onGo(2))),
+                  Expanded(
+                      child: _QuickCard(
+                          icon: Icons.sports_esports_rounded,
+                          title: '遊戲',
+                          value: '開玩',
+                          onTap: () => onGo(2))),
                 ],
-              ),
-              const SizedBox(height: 12),
-              SectionCard(
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => CommunityPage(state: state))),
-                child: const Row(children: [
-                  Icon(Icons.groups_rounded),
-                  SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('社群', style: TextStyle(fontWeight: FontWeight.w900)), SizedBox(height: 3), Text('公告 · 排行榜 · 語音房', style: TextStyle(color: Colors.white38, fontSize: 11))])),
-                  Icon(Icons.chevron_right_rounded, color: Colors.white30),
-                ]),
               ),
               const SizedBox(height: 12),
               SectionCard(
@@ -90,7 +101,9 @@ class HomePage extends StatelessWidget {
                     Container(
                       width: 46,
                       height: 46,
-                      decoration: BoxDecoration(color: primary.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(16)),
+                      decoration: BoxDecoration(
+                          color: primary.withValues(alpha: 0.13),
+                          borderRadius: BorderRadius.circular(16)),
                       child: Icon(Icons.bolt_rounded, color: primary),
                     ),
                     const SizedBox(width: 14),
@@ -98,9 +111,12 @@ class HomePage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('每日簽到', style: TextStyle(fontWeight: FontWeight.w900)),
+                          Text('每日簽到',
+                              style: TextStyle(fontWeight: FontWeight.w900)),
                           SizedBox(height: 4),
-                          Text('+10', style: TextStyle(fontSize: 13, color: Colors.white54)),
+                          Text('+10',
+                              style: TextStyle(
+                                  fontSize: 13, color: Colors.white54)),
                         ],
                       ),
                     ),
@@ -118,41 +134,58 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _MiniStat(label: '在線', value: '${state.onlineCount}')),
+                  Expanded(
+                      child: _MiniStat(
+                          label: '在線', value: '${state.onlineCount}')),
                   const SizedBox(width: 10),
-                  Expanded(child: _MiniStat(label: '勝場', value: '${state.wins}')),
+                  Expanded(
+                      child: _MiniStat(label: '勝場', value: '${state.wins}')),
                   const SizedBox(width: 10),
-                  Expanded(child: _MiniStat(label: '道具', value: '${state.inventory.values.fold<int>(0, (a, b) => a + b)}')),
+                  Expanded(
+                      child: _MiniStat(
+                          label: '道具',
+                          value:
+                              '${state.inventory.values.fold<int>(0, (a, b) => a + b)}')),
                 ],
               ),
-              if (state.lastNotificationText != null) ...[
-                SectionCard(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.notifications_active_outlined, color: Colors.amber),
-                      const SizedBox(width: 10),
-                      Expanded(child: Text(state.lastNotificationText!, style: const TextStyle(fontWeight: FontWeight.w700))),
-                      IconButton(onPressed: state.clearNotification, icon: const Icon(Icons.close_rounded, size: 18)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (state.friendRequests.any((r) => r.target == state.username)) ...[
+              if (state.friendRequests
+                  .any((r) => r.target == state.username)) ...[
                 SectionCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [const Icon(Icons.person_add_alt_1_rounded, size: 18), const SizedBox(width: 8), const Text('好友邀請', style: TextStyle(fontWeight: FontWeight.w900)), const Spacer(), Text('${state.friendRequests.where((r) => r.target == state.username).length}', style: const TextStyle(color: Colors.white54))]),
+                      Row(children: [
+                        const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                        const SizedBox(width: 8),
+                        const Text('好友邀請',
+                            style: TextStyle(fontWeight: FontWeight.w900)),
+                        const Spacer(),
+                        Text(
+                            '${state.friendRequests.where((r) => r.target == state.username).length}',
+                            style: const TextStyle(color: Colors.white54))
+                      ]),
                       const SizedBox(height: 10),
-                      ...state.friendRequests.where((r) => r.target == state.username).map((request) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(children: [
-                          Expanded(child: Text(request.sender, style: const TextStyle(fontWeight: FontWeight.w800))),
-                          TextButton(onPressed: () => state.respondFriendRequest(request.id, false), child: const Text('拒絕')),
-                          FilledButton.tonal(onPressed: () => state.respondFriendRequest(request.id, true), child: const Text('接受')),
-                        ]),
-                      )),
+                      ...state.friendRequests
+                          .where((r) => r.target == state.username)
+                          .map((request) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(children: [
+                                  Expanded(
+                                      child: Text(request.sender,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w800))),
+                                  TextButton(
+                                      onPressed: () =>
+                                          state.respondFriendRequest(
+                                              request.id, false),
+                                      child: const Text('拒絕')),
+                                  FilledButton.tonal(
+                                      onPressed: () =>
+                                          state.respondFriendRequest(
+                                              request.id, true),
+                                      child: const Text('接受')),
+                                ]),
+                              )),
                     ],
                   ),
                 ),
@@ -160,63 +193,133 @@ class HomePage extends StatelessWidget {
               ],
               Row(
                 children: [
-                  const Expanded(child: Text('好友', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900))),
-                  TextButton.icon(onPressed: state.refreshSocial, icon: const Icon(Icons.refresh_rounded, size: 17), label: const Text('更新')),
+                  const Expanded(
+                      child: Text('好友',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w900))),
+                  TextButton.icon(
+                      onPressed: state.refreshSocial,
+                      icon: const Icon(Icons.refresh_rounded, size: 17),
+                      label: const Text('更新')),
                 ],
               ),
               const SizedBox(height: 10),
               if (state.friends.isEmpty)
-                const SectionCard(child: Text('還沒有好友，點成員可以加好友。', style: TextStyle(color: Colors.white54)))
+                const SectionCard(
+                    child: Text('還沒有好友，點成員可以加好友。',
+                        style: TextStyle(color: Colors.white54)))
               else
                 SectionCard(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Column(
-                    children: state.friends.take(5).map((friend) => ListTile(
-                      dense: true,
-                      leading: CircleAvatar(child: Text(friend.name.substring(0, 1))),
-                      title: Text(friend.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                      subtitle: Text('${friend.online ? '在線' : '離線'} · ${friend.wins} 勝', style: const TextStyle(fontSize: 11, color: Colors.white38)),
-                      trailing: Text('${friend.coins}', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w800)),
-                      onTap: () => _memberActions(context, friend.name),
-                    )).toList(),
+                    children: state.friends
+                        .take(5)
+                        .map((friend) => ListTile(
+                              dense: true,
+                              leading: CircleAvatar(
+                                  child: Text(friend.name.substring(0, 1))),
+                              title: Text(friend.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w800)),
+                              subtitle: Text(
+                                  '${friend.online ? '在線' : '離線'} · ${friend.wins} 勝',
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Colors.white38)),
+                              trailing: Text('${friend.coins}',
+                                  style: const TextStyle(
+                                      color: Colors.amber,
+                                      fontWeight: FontWeight.w800)),
+                              onTap: () => _memberActions(context, friend.name),
+                            ))
+                        .toList(),
                   ),
                 ),
               const SizedBox(height: 24),
-              const Text('成員', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 10),
-              SectionCard(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Column(
-                  children: state.members.take(4).map((member) {
-                    final dotColor = member.online ? Colors.greenAccent : Colors.white24;
-                    return ListTile(
-                      dense: true,
-                      leading: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 19,
-                            backgroundColor: primary.withValues(alpha: 0.12),
-                            child: Text(member.name.substring(0, 1), style: const TextStyle(fontWeight: FontWeight.w900)),
-                          ),
-                          Positioned(right: 0, bottom: 0, child: Container(width: 10, height: 10, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle, border: Border.all(color: const Color(0xFF111117), width: 2)))),
-                        ],
-                      ),
-                      title: Text(member.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                      subtitle: Text(member.status, style: const TextStyle(fontSize: 11, color: Colors.white38)),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('${member.coins}', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w800)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 18),
-                        ],
-                      ),
-                      onTap: () => _memberActions(context, member.name),
-                    );
-                  }).toList(),
-                ),
-              ),
+              _buildAnnouncements(),
+              const SizedBox(height: 18),
+              _buildLeaderboard(context),
             ]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnnouncements() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('公告',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 10),
+        if (state.announcements.isEmpty)
+          const SectionCard(
+              child: Text('目前沒有公告', style: TextStyle(color: Colors.white54)))
+        else
+          ...state.announcements.take(5).map((announcement) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SectionCard(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Expanded(
+                              child: Text(announcement.title,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w900))),
+                          Text(announcement.time,
+                              style: const TextStyle(
+                                  fontSize: 11, color: Colors.white30)),
+                        ]),
+                        const SizedBox(height: 7),
+                        Text(announcement.body,
+                            style: const TextStyle(
+                                color: Colors.white60, height: 1.35)),
+                      ]),
+                ),
+              )),
+      ],
+    );
+  }
+
+  Widget _buildLeaderboard(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('排行榜',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 10),
+        SectionCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: state.leaderboard.isEmpty
+                ? [
+                    const Padding(
+                        padding: EdgeInsets.all(18),
+                        child: Text('目前沒有排行榜資料',
+                            style: TextStyle(color: Colors.white54)))
+                  ]
+                : [
+                    for (var i = 0; i < state.leaderboard.length; i++)
+                      ListTile(
+                        dense: true,
+                        leading:
+                            CircleAvatar(radius: 18, child: Text('${i + 1}')),
+                        title: Text('${state.leaderboard[i]['name'] ?? ''}',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w800)),
+                        subtitle: Text(
+                            '勝場 ${state.leaderboard[i]['wins'] ?? 0} · 聊天 ${state.leaderboard[i]['chatCount'] ?? 0}',
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.white38)),
+                        trailing: Text('${state.leaderboard[i]['coins'] ?? 0}',
+                            style: const TextStyle(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.w900)),
+                        onTap: () => _memberActions(
+                            context, '${state.leaderboard[i]['name'] ?? ''}'),
+                      ),
+                  ],
           ),
         ),
       ],
@@ -245,7 +348,8 @@ class HomePage extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 28),
                   child: Center(
-                    child: Text('目前沒有通知', style: TextStyle(color: Colors.white54)),
+                    child:
+                        Text('目前沒有通知', style: TextStyle(color: Colors.white54)),
                   ),
                 )
               else
@@ -261,7 +365,8 @@ class HomePage extends StatelessWidget {
                           child: Icon(
                             item.type.contains('wallet')
                                 ? Icons.monetization_on_outlined
-                                : item.type.contains('truth') || item.type.contains('werewolf')
+                                : item.type.contains('truth') ||
+                                        item.type.contains('werewolf')
                                     ? Icons.sports_esports_rounded
                                     : Icons.notifications_none_rounded,
                             size: 18,
@@ -329,7 +434,8 @@ class HomePage extends StatelessWidget {
           children: [
             ListTile(
               leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
-              title: Text(target, style: const TextStyle(fontWeight: FontWeight.w900)),
+              title: Text(target,
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
               subtitle: const Text('成員操作'),
             ),
             ListTile(
@@ -395,15 +501,19 @@ class HomePage extends StatelessWidget {
           controller: controller,
           autofocus: true,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: '金幣', hintText: '例如 500'),
+          decoration:
+              const InputDecoration(labelText: '金幣', hintText: '例如 500'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('取消')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('取消')),
           FilledButton(
             onPressed: () {
               final amount = int.tryParse(controller.text.trim()) ?? 0;
               Navigator.pop(dialogContext);
-              if (amount > 0 && amount <= state.coins) state.transferCoins(target, amount);
+              if (amount > 0 && amount <= state.coins)
+                state.transferCoins(target, amount);
             },
             child: const Text('轉帳'),
           ),
@@ -419,7 +529,11 @@ class _QuickCard extends StatelessWidget {
   final String value;
   final VoidCallback onTap;
 
-  const _QuickCard({required this.icon, required this.title, required this.value, required this.onTap});
+  const _QuickCard(
+      {required this.icon,
+      required this.title,
+      required this.value,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -432,9 +546,12 @@ class _QuickCard extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(icon, color: primary, size: 24),
           const SizedBox(height: 20),
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
           const SizedBox(height: 3),
-          Text(value, style: const TextStyle(fontSize: 12, color: Colors.white54)),
+          Text(value,
+              style: const TextStyle(fontSize: 12, color: Colors.white54)),
         ]),
       ),
     );
@@ -451,9 +568,11 @@ class _MiniStat extends StatelessWidget {
     return SectionCard(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Column(children: [
-        Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+        Text(value,
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.white38)),
+        Text(label,
+            style: const TextStyle(fontSize: 11, color: Colors.white38)),
       ]),
     );
   }

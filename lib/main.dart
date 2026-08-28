@@ -31,7 +31,7 @@ class Thunder611App extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: '雷霆611',
+      title: '雷霆社群',
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
@@ -39,6 +39,7 @@ class Thunder611App extends StatelessWidget {
         scaffoldBackgroundColor: background,
         fontFamily: 'LXGWWenKaiTC',
         textTheme: ThemeData.dark().textTheme.apply(
+          fontFamily: 'LXGWWenKaiTC',
           bodyColor: Colors.white,
           displayColor: Colors.white,
         ),
@@ -53,7 +54,7 @@ class Thunder611App extends StatelessWidget {
           behavior: SnackBarBehavior.floating,
           backgroundColor: const Color(0xFF253238),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          contentTextStyle: const TextStyle(fontWeight: FontWeight.w700),
+          contentTextStyle: const TextStyle(fontFamily: 'LXGWWenKaiTC', fontWeight: FontWeight.w700),
         ),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
@@ -61,14 +62,14 @@ class Thunder611App extends StatelessWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
           centerTitle: false,
-          titleTextStyle: const TextStyle(fontSize: 23, fontWeight: FontWeight.w400),
+          titleTextStyle: const TextStyle(fontFamily: 'LXGWWenKaiTC', fontSize: 23, fontWeight: FontWeight.w400),
         ),
         navigationBarTheme: NavigationBarThemeData(
           height: 70,
           backgroundColor: const Color(0xFF0D0D12),
           indicatorColor: primary.withValues(alpha: 0.22),
           labelTextStyle: WidgetStatePropertyAll(
-            TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            TextStyle(fontFamily: 'LXGWWenKaiTC', fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
@@ -93,7 +94,7 @@ class Thunder611App extends StatelessWidget {
             minimumSize: const Size(0, 46),
             padding: const EdgeInsets.symmetric(horizontal: 18),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            textStyle: const TextStyle(fontFamily: 'LXGWWenKaiTC', fontWeight: FontWeight.w800),
           ),
         ),
       ),

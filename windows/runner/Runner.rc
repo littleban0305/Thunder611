@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "thunder_611" "\0"
+            VALUE "FileDescription", "Thunder Community" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "thunder_611" "\0"
+            VALUE "InternalName", "Thunder Community" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "thunder_611.exe" "\0"
-            VALUE "ProductName", "thunder_611" "\0"
+            VALUE "OriginalFilename", "Thunder Community.exe" "\0"
+            VALUE "ProductName", "Thunder Community" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

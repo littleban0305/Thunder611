@@ -33,6 +33,8 @@ async function initStorage(dataDir) {
       role TEXT NOT NULL DEFAULT 'member',
       banned INTEGER NOT NULL DEFAULT 0,
       avatar_url TEXT,
+      display_name TEXT,
+      bio TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL,
       last_seen TEXT
     );
@@ -175,6 +177,8 @@ async function initStorage(dataDir) {
   ensureColumn('users', 'role', "TEXT NOT NULL DEFAULT 'member'");
   ensureColumn('users', 'banned', "INTEGER NOT NULL DEFAULT 0");
   ensureColumn('users', 'avatar_url', 'TEXT');
+  ensureColumn('users', 'display_name', 'TEXT');
+  ensureColumn('users', 'bio', "TEXT NOT NULL DEFAULT ''");
   ensureColumn('lobby_messages', 'kind', "TEXT NOT NULL DEFAULT 'text'");
   ensureColumn('lobby_messages', 'payload', "TEXT NOT NULL DEFAULT '{}'");
   ensureColumn('private_messages', 'kind', "TEXT NOT NULL DEFAULT 'text'");
@@ -291,7 +295,7 @@ function transaction(callback) {
 }
 
 function user(username) {
-  return get('SELECT username, coins, wins, role, banned, avatar_url, created_at, last_seen FROM users WHERE username = ?', [username]);
+  return get('SELECT username, coins, wins, role, banned, avatar_url, display_name, bio, created_at, last_seen FROM users WHERE username = ?', [username]);
 }
 
 function fullProfile(username) {
@@ -308,7 +312,18 @@ function fullProfile(username) {
     role: profile.role || 'member',
     banned: Number(profile.banned || 0) === 1,
     avatarUrl: profile.avatar_url || '',
+    displayName: profile.display_name || profile.username,
+    bio: profile.bio || '',
   };
+}
+
+function updateProfile(username, displayName, bio) {
+  const cleanName = String(displayName || '').trim().slice(0, 30);
+  const cleanBio = String(bio || '').trim().slice(0, 160);
+  if (!cleanName) throw new Error('顯示名稱不能為空白');
+  if (!user(username)) throw new Error('找不到使用者');
+  run('UPDATE users SET display_name = ?, bio = ? WHERE username = ?', [cleanName, cleanBio, username]);
+  return fullProfile(username);
 }
 
 function setLastSeen(username) {
@@ -896,8 +911,12 @@ function createChatRoom(name, creator, isPublic = true) {
 }
 
 function joinChatRoom(roomId, username) {
-  const room = get('SELECT id, name, created_by, created_at FROM chat_rooms WHERE id = ?', [roomId]);
+  const room = get('SELECT id, name, created_by, is_public, created_at FROM chat_rooms WHERE id = ?', [roomId]);
   if (!room) throw new Error('聊天室不存在');
+  const isMember = Boolean(get('SELECT room_id FROM chat_room_members WHERE room_id = ? AND username = ?', [roomId, username]));
+  if (Number(room.is_public) !== 1 && room.created_by !== username && !isMember) {
+    throw new Error('這是私人聊天室，請由建立者邀請');
+  }
   run('INSERT OR IGNORE INTO chat_room_members(room_id, username, joined_at) VALUES (?, ?, ?)', [roomId, username, new Date().toISOString()]);
   return chatRooms(username).find((r) => r.id === roomId) || null;
 }
@@ -1015,7 +1034,7 @@ function hasPrivateConversation(username, other) {
 
 function publicMembers(limit = 500) {
   return query(`
-    SELECT username AS name, coins, wins, avatar_url AS avatarUrl, role, banned, created_at, last_seen
+    SELECT username AS name, coins, wins, avatar_url AS avatarUrl, display_name AS displayName, role, banned, created_at, last_seen
     FROM users
     WHERE banned = 0
     ORDER BY username COLLATE NOCASE
@@ -1025,6 +1044,7 @@ function publicMembers(limit = 500) {
     coins: Number(row.coins || 0),
     wins: Number(row.wins || 0),
     avatarUrl: row.avatarUrl || '',
+    displayName: row.displayName || row.name,
     createdAt: row.created_at,
     lastSeen: row.last_seen,
   }));
@@ -1063,6 +1083,7 @@ module.exports = {
   transaction,
   user,
   fullProfile,
+  updateProfile,
   setLastSeen,
   addCoins,
   buyItem,

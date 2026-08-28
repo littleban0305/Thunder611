@@ -11,12 +11,14 @@ import 'services/voice_service.dart';
 
 class Member {
   final String name;
+  final String displayName;
   final bool online;
   final String status;
   final int coins;
 
   const Member({
     required this.name,
+    this.displayName = '',
     required this.online,
     required this.status,
     required this.coins,
@@ -277,24 +279,44 @@ class WerewolfRoomState {
   final String roomId;
   final String host;
   final String phase;
+  final String? nightStep;
+  final DateTime? phaseEndsAt;
+  final int? phaseDurationSeconds;
+  final String? speaker;
+  final bool myTurn;
   final int round;
   final int maxPlayers;
   final List<WerewolfPlayer> players;
   final String? myRole;
   final bool myAlive;
   final List<WerewolfRoomMessage> messages;
+  final Map<String, int>? voteCounts;
+  final String? myVote;
+  final String? witchVictim;
+  final bool witchHasAntidote;
+  final bool witchHasPoison;
   final String? winner;
 
   const WerewolfRoomState({
     required this.roomId,
     required this.host,
     required this.phase,
+    required this.nightStep,
+    required this.phaseEndsAt,
+    required this.phaseDurationSeconds,
+    required this.speaker,
+    required this.myTurn,
     required this.round,
     required this.maxPlayers,
     required this.players,
     required this.myRole,
     required this.myAlive,
     required this.messages,
+    required this.voteCounts,
+    required this.myVote,
+    required this.witchVictim,
+    required this.witchHasAntidote,
+    required this.witchHasPoison,
     required this.winner,
   });
 
@@ -303,6 +325,14 @@ class WerewolfRoomState {
         roomId: '${json['roomId'] ?? ''}',
         host: '${json['host'] ?? ''}',
         phase: '${json['phase'] ?? 'lobby'}',
+        nightStep: json['nightStep']?.toString(),
+        phaseEndsAt: json['phaseEndsAt'] is num
+            ? DateTime.fromMillisecondsSinceEpoch(
+                (json['phaseEndsAt'] as num).toInt())
+            : DateTime.tryParse('${json['phaseEndsAt'] ?? ''}'),
+        phaseDurationSeconds: (json['phaseDurationSeconds'] as num?)?.toInt(),
+        speaker: json['speaker']?.toString(),
+        myTurn: json['myTurn'] == true,
         round: (json['round'] as num?)?.toInt() ?? 0,
         maxPlayers: (json['maxPlayers'] as num?)?.toInt() ?? 8,
         players: (json['players'] is List)
@@ -321,6 +351,20 @@ class WerewolfRoomState {
                     WerewolfRoomMessage.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
             : const [],
+        voteCounts: json['voteCounts'] is Map
+            ? Map<String, int>.fromEntries(
+                (json['voteCounts'] as Map).entries.map(
+                      (entry) => MapEntry(
+                        '${entry.key}',
+                        (entry.value as num?)?.toInt() ?? 0,
+                      ),
+                    ),
+              )
+            : null,
+        myVote: json['myVote']?.toString(),
+        witchVictim: json['witchVictim']?.toString(),
+        witchHasAntidote: json['witchHasAntidote'] == true,
+        witchHasPoison: json['witchHasPoison'] == true,
         winner: json['winner']?.toString(),
       );
 }
@@ -471,12 +515,15 @@ class ThunderAppState extends ChangeNotifier {
   String? lastActionError;
   final Set<String> itemBusy = <String>{};
   bool werewolfBusy = false;
+  bool werewolfVotePending = false;
   TruthRoomState? truthRoom;
   List<Map<String, dynamic>> truthRooms = const [];
   bool truthBusy = false;
   Map<String, dynamic> voiceUsers = const {};
   String? voiceError;
   String avatarUrl = '';
+  String displayName = '';
+  String bio = '';
   bool isAdmin = false;
   Map<String, dynamic> werewolfStats = const {'total': 0, 'wins': 0, 'rate': 0};
   int chatCount = 0;
@@ -527,6 +574,8 @@ class ThunderAppState extends ChangeNotifier {
       selectedTitle = '${profile['selectedTitle'] ?? '新手'}';
       selectedFrame = '${profile['selectedFrame'] ?? 'default'}';
       avatarUrl = '${profile['avatarUrl'] ?? ''}';
+      displayName = '${profile['displayName'] ?? username}';
+      bio = '${profile['bio'] ?? ''}';
       final rawInventory = profile['inventory'];
       if (rawInventory is Map) {
         inventory
@@ -920,6 +969,13 @@ class ThunderAppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    if (type == 'profile.updated') {
+      _applyProfile(event['profile']);
+      lastNotificationText = '個人資料已更新';
+      _persist();
+      notifyListeners();
+      return;
+    }
     if (type == 'admin.users') {
       final raw = event['users'];
       if (raw is List)
@@ -952,6 +1008,7 @@ class ThunderAppState extends ChangeNotifier {
         if (member.name != name) return member;
         return Member(
           name: member.name,
+          displayName: member.displayName,
           online: member.online,
           status: member.status,
           coins: amount,
@@ -1276,7 +1333,11 @@ class ThunderAppState extends ChangeNotifier {
               ? '${voice.roomType}:${voice.roomId}'
               : '';
       final rawUsers = event['users'];
-      if (key.isNotEmpty && key == currentKey && rawUsers is List) {
+      final isCurrentWerewolfVoice =
+          voice.roomType == 'werewolf' && key.startsWith('$currentKey:');
+      if (key.isNotEmpty &&
+          (key == currentKey || isCurrentWerewolfVoice) &&
+          rawUsers is List) {
         voiceUsers = {
           for (final item in rawUsers.whereType<Map>())
             '${item['name'] ?? ''}': Map<String, dynamic>.from(item),
@@ -1308,6 +1369,17 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'werewolf.state' || type == 'werewolf.ended') {
       werewolfRoom = WerewolfRoomState.fromJson(event);
+      final room = werewolfRoom!;
+      if (voice.active &&
+          voice.roomType == 'werewolf' &&
+          voice.roomId == room.roomId &&
+          room.phase == 'day' &&
+          voice.muted == room.myTurn) {
+        voice.setMuted(realtime, !room.myTurn);
+      }
+      if (werewolfRoom!.phase != 'voting' || werewolfRoom!.myVote != null) {
+        werewolfVotePending = false;
+      }
       if (type == 'werewolf.ended') {
         _applyProfile(event['profile']);
         _applyTransactions(event['transactions']);
@@ -1339,6 +1411,7 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'werewolf.left') {
       werewolfBusy = false;
+      werewolfVotePending = false;
       lastActionError = null;
       werewolfRoom = null;
       werewolfInspectTarget = null;
@@ -1354,6 +1427,9 @@ class ThunderAppState extends ChangeNotifier {
       lastActionError = '${event['error'] ?? '操作失敗'}';
       lastNotificationText = lastActionError;
       werewolfBusy = false;
+      if (event['action'] == 'werewolf.vote') {
+        werewolfVotePending = false;
+      }
       notifyListeners();
     }
 
@@ -1400,6 +1476,7 @@ class ThunderAppState extends ChangeNotifier {
         .whereType<Map>()
         .map((e) => Member(
               name: '${e['name'] ?? ''}',
+              displayName: '${e['displayName'] ?? e['name'] ?? ''}',
               online: e['online'] == true,
               status: '${e['status'] ?? '在線'}',
               coins: (e['coins'] as num?)?.toInt() ?? 0,
@@ -1424,6 +1501,8 @@ class ThunderAppState extends ChangeNotifier {
     coins = (raw['coins'] as num?)?.toInt() ?? coins;
     wins = (raw['wins'] as num?)?.toInt() ?? wins;
     avatarUrl = '${raw['avatarUrl'] ?? avatarUrl}';
+    displayName = '${raw['displayName'] ?? displayName}';
+    bio = '${raw['bio'] ?? bio}';
     isAdmin = raw['role'] == 'admin' || raw['isAdmin'] == true;
     final rawInventory = raw['inventory'];
     if (rawInventory is Map) {
@@ -2016,6 +2095,19 @@ class ThunderAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateProfile(String newDisplayName, String newBio) {
+    if (!realtimeConnected) {
+      lastActionError = '目前沒有連上伺服器';
+      notifyListeners();
+      return;
+    }
+    realtime.send({
+      'type': 'profile.update',
+      'displayName': newDisplayName.trim(),
+      'bio': newBio.trim()
+    });
+  }
+
   void clearNotification() {
     lastNotificationText = null;
     notifyListeners();
@@ -2119,13 +2211,31 @@ class ThunderAppState extends ChangeNotifier {
     realtime.send({'type': 'werewolf.speak', 'text': text.trim()});
   }
 
+  void werewolfSpeakDone() {
+    if (!realtimeConnected || werewolfRoom?.myTurn != true) return;
+    realtime.send({'type': 'werewolf.speak_done'});
+  }
+
   void werewolfNight(String target) {
     if (!realtimeConnected) return;
     realtime.send({'type': 'werewolf.night', 'target': target});
   }
 
-  void werewolfVote(String target) {
+  void werewolfWitch(String action, {String? target}) {
     if (!realtimeConnected) return;
+    realtime.send({
+      'type': 'werewolf.witch',
+      'action': action,
+      if (target != null) 'target': target,
+    });
+  }
+
+  void werewolfVote(String target) {
+    if (!realtimeConnected ||
+        werewolfVotePending ||
+        werewolfRoom?.myVote != null) return;
+    werewolfVotePending = true;
+    notifyListeners();
     realtime.send({'type': 'werewolf.vote', 'target': target});
   }
 
@@ -2266,6 +2376,15 @@ class ThunderAppState extends ChangeNotifier {
         notifyListeners();
       },
     );
+    final room = werewolfRoom;
+    if (voice.active &&
+        roomType == 'werewolf' &&
+        room?.roomId == roomId &&
+        room?.phase == 'day' &&
+        room?.myTurn != true &&
+        !voice.muted) {
+      voice.setMuted(realtime, true);
+    }
     voiceError = voice.error;
     notifyListeners();
   }

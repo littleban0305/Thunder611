@@ -15,3 +15,5 @@ server/data/users.json
 server/node_modules/
 server/data/uploads/*
 !server/data/uploads/.gitkeep
+# Widget Preview related
+.widget_preview/

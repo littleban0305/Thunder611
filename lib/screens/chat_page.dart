@@ -23,7 +23,10 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final controller = TextEditingController();
+  final ScrollController _messageScrollController = ScrollController();
   String? selectedPrivate;
+  int _lastMessageCount = -1;
+  String _lastConversation = '';
 
   @override
   void initState() {
@@ -76,6 +79,18 @@ class _ChatPageState extends State<ChatPage> {
       state.sendLobby(text);
     }
     controller.clear();
+  }
+
+  void _scrollMessagesToBottom() {
+    if (!_messageScrollController.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_messageScrollController.hasClients) return;
+      _messageScrollController.animateTo(
+        _messageScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> pickMedia() async {
@@ -759,6 +774,13 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final conversation = selectedPrivate ?? activeRoomId ?? 'lobby';
+    if (_lastConversation != conversation ||
+        _lastMessageCount != activeMessages.length) {
+      _lastConversation = conversation;
+      _lastMessageCount = activeMessages.length;
+      _scrollMessagesToBottom();
+    }
     final isRoom = activeRoomId != null;
     final isChatContext = selectedPrivate == null;
     final voiceRoomId = activeRoomId ?? 'lobby';
@@ -902,6 +924,7 @@ class _ChatPageState extends State<ChatPage> {
           ),
         Expanded(
           child: ListView.separated(
+            controller: _messageScrollController,
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
             itemCount: activeMessages.length,
             separatorBuilder: (_, __) => const SizedBox(height: 9),
@@ -949,11 +972,12 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 if (selectedPrivate == null)
                   if (selectedPrivate == null)
-                    IconButton(
-                      onPressed: createPoll,
-                      tooltip: '投票',
-                      icon: const Icon(Icons.poll_outlined),
-                    ),
+                    if (selectedPrivate == null)
+                      IconButton(
+                        onPressed: createPoll,
+                        tooltip: '投票',
+                        icon: const Icon(Icons.poll_outlined),
+                      ),
               ];
 
               final field = TextField(
@@ -1058,10 +1082,14 @@ class _ChatPageState extends State<ChatPage> {
               (member) => ListTile(
                 leading: CircleAvatar(
                   child: Text(
-                    member.name.isEmpty ? '?' : member.name.substring(0, 1),
+                    member.displayName.isEmpty
+                        ? '?'
+                        : member.displayName.substring(0, 1),
                   ),
                 ),
-                title: Text(member.name),
+                title: Text(member.displayName.isEmpty
+                    ? member.name
+                    : member.displayName),
                 subtitle: Text(member.status),
                 onTap: () {
                   Navigator.pop(context);
@@ -1080,6 +1108,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     controller.dispose();
+    _messageScrollController.dispose();
     super.dispose();
   }
 }

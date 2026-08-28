@@ -1,4 +1,4 @@
-# 雷霆611 V0.8 Server
+# 雷霆社群 / Thunder Community Server
 
 V0.8 是目前的完整多人社群開發版：SQLite + WebSocket + Token 登入 + 好友 + 金幣互動 + 純文字狼人殺。
 

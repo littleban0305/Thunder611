@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-Write-Host 'Thunder611 mobile platform setup' -ForegroundColor Cyan
+Write-Host 'Thunder Community / 雷霆社群 mobile platform setup' -ForegroundColor Cyan
 if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
   Write-Host '找不到 Flutter。請先安裝 Flutter SDK。' -ForegroundColor Yellow
   exit 1
@@ -20,7 +20,7 @@ $plist = Join-Path (Get-Location) 'ios\Runner\Info.plist'
 if (Test-Path $plist) {
   $plistText = Get-Content $plist -Raw
   if ($plistText -notmatch 'NSMicrophoneUsageDescription') {
-    $plistText = $plistText -replace '(?s)(</dict>)', '    <key>NSMicrophoneUsageDescription</key>\r\n    <string>雷霆611需要麥克風來使用語音房。</string>\r\n$1'
+    $plistText = $plistText -replace '(?s)(</dict>)', '    <key>NSMicrophoneUsageDescription</key>\r\n    <string>雷霆社群需要麥克風來使用語音房。</string>\r\n$1'
     Set-Content -Path $plist -Value $plistText -Encoding UTF8
   }
 }

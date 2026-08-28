@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
@@ -374,6 +376,8 @@ class _WerewolfRoomView extends StatelessWidget {
         return '白天討論';
       case 'voting':
         return '投票';
+      case 'hunter':
+        return '獵人反擊';
       case 'ended':
         return '結束';
       default:
@@ -422,6 +426,15 @@ class _WerewolfRoomView extends StatelessWidget {
                   ],
                 ],
               ),
+              if (room.phaseEndsAt != null &&
+                  room.phaseDurationSeconds != null) ...[
+                const SizedBox(height: 10),
+                _WerewolfPhaseTimer(
+                  phase: room.phase,
+                  endsAt: room.phaseEndsAt!,
+                  durationSeconds: room.phaseDurationSeconds!,
+                ),
+              ],
               const SizedBox(height: 12),
               SectionCard(
                 child: Column(
@@ -575,6 +588,56 @@ class _WerewolfRoomView extends StatelessWidget {
   }
 }
 
+class _WerewolfPhaseTimer extends StatefulWidget {
+  final String phase;
+  final DateTime endsAt;
+  final int durationSeconds;
+
+  const _WerewolfPhaseTimer({
+    required this.phase,
+    required this.endsAt,
+    required this.durationSeconds,
+  });
+
+  @override
+  State<_WerewolfPhaseTimer> createState() => _WerewolfPhaseTimerState();
+}
+
+class _WerewolfPhaseTimerState extends State<_WerewolfPhaseTimer> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = widget.endsAt
+      .difference(DateTime.now())
+      .inSeconds
+      .clamp(0, widget.durationSeconds)
+      .toInt();
+    final progress = widget.durationSeconds == 0 ? 0.0 : remaining / widget.durationSeconds;
+    final label = widget.phase == 'voting' ? '投票剩餘' : '發言剩餘';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$label $remaining 秒', style: const TextStyle(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 6),
+        LinearProgressIndicator(value: progress),
+      ],
+    );
+  }
+}
+
 class _WerewolfActionCard extends StatelessWidget {
   final ThunderAppState state;
   final WerewolfRoomState room;
@@ -591,44 +654,55 @@ class _WerewolfActionCard extends StatelessWidget {
   String _actionText() {
     if (!room.myAlive) return '你已出局，可以繼續觀看討論。';
     if (room.phase == 'night') {
-      switch (room.myRole) {
-        case '狼人':
-          return '選一名玩家作為目標。';
-        case '預言家':
-          return '查看一名玩家是否為狼人。';
-        case '守衛':
-          return '保護一名玩家。';
-        case '獵人':
-          return '你是獵人。若出局可以帶走一名玩家。';
-        case '平民':
-          return '你是平民，透過發言和票型找出狼人。';
-        default:
-          return '等待其他玩家。';
-      }
+      if (room.nightStep == 'wolf') return room.myRole == '狼人' ? '與狼隊討論後，選擇今晚的目標。' : '狼人正在行動，請保持安靜。';
+      if (room.nightStep == 'witch') return room.myRole == '女巫' ? '女巫請決定是否使用藥水。' : '女巫正在行動，請保持安靜。';
+      if (room.nightStep == 'seer') return room.myRole == '預言家' ? '查看一名玩家是否為狼人。' : '預言家正在行動，請保持安靜。';
+      if (room.nightStep == 'guard') return room.myRole == '守衛' ? '保護一名玩家。' : '守衛正在行動，請保持安靜。';
+      return '夜晚結算中，請保持安靜。';
     }
-    if (room.phase == 'day') return '自由討論，房主可開始投票。';
+    if (room.phase == 'day') {
+      return room.myTurn
+          ? '輪到你發言，可按「說完了」提前結束。'
+          : room.speaker == null
+            ? '正在安排下一位發言者。'
+            : '${room.speaker} 正在發言，請保持安靜。';
+    }
     if (room.phase == 'voting') return '選一名活著的玩家投票。';
+    if (room.phase == 'hunter') return '獵人已出局，請選一名活著的玩家反擊。';
     return '';
   }
 
   @override
   Widget build(BuildContext context) {
     final active = room.myAlive;
-    final nightRole = ['狼人', '預言家', '守衛'].contains(room.myRole);
+    final nightRole = (room.nightStep == 'wolf' && room.myRole == '狼人') ||
+      (room.nightStep == 'seer' && room.myRole == '預言家') ||
+      (room.nightStep == 'guard' && room.myRole == '守衛');
     final candidates =
         alivePlayers.where((p) => p.name != state.username).toList();
+    final nightCandidates = room.nightStep == 'guard'
+      ? alivePlayers
+      : candidates;
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_actionText(),
               style: const TextStyle(fontWeight: FontWeight.w800)),
+          if (room.phase == 'day' && room.myTurn) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: state.werewolfSpeakDone,
+              icon: const Icon(Icons.check_rounded),
+              label: const Text('說完了'),
+            ),
+          ],
           if (active && room.phase == 'night' && nightRole) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: candidates
+                children: nightCandidates
                   .map((p) => OutlinedButton(
                       onPressed: () => state.werewolfNight(p.name),
                       child: Text(p.name)))
@@ -640,6 +714,38 @@ class _WerewolfActionCard extends StatelessWidget {
               Text(
                   '${state.werewolfInspectTarget}：${state.werewolfInspectIsWolf == true ? '是狼人' : '不是狼人'}'),
             ],
+          ],
+          if (active && room.phase == 'night' &&
+              room.nightStep == 'witch' && room.myRole == '女巫') ...[
+            if (room.witchVictim != null && room.witchHasAntidote) ...[
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () => state.werewolfWitch('save'),
+                icon: const Icon(Icons.favorite_rounded),
+                label: Text('使用解藥救 ${room.witchVictim}'),
+              ),
+            ],
+            if (room.witchHasPoison) ...[
+              const SizedBox(height: 12),
+              const Text('使用毒藥帶走一名玩家'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: candidates
+                    .where((player) => player.name != room.witchVictim)
+                    .map((p) => OutlinedButton(
+                          onPressed: () => state.werewolfWitch('poison', target: p.name),
+                          child: Text(p.name),
+                        ))
+                    .toList(),
+              ),
+            ],
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => state.werewolfWitch('skip'),
+              child: const Text('本晚不使用藥水'),
+            ),
           ],
           if (state.werewolfHunterAvailable &&
               state.werewolfHunterTargets.isNotEmpty) ...[
@@ -664,38 +770,30 @@ class _WerewolfActionCard extends StatelessWidget {
           ],
           if (active && room.phase == 'voting') ...[
             const SizedBox(height: 12),
+            if (room.myVote == null && !state.werewolfVotePending)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: candidates
+                    .map((p) => OutlinedButton(
+                        onPressed: () => state.werewolfVote(p.name),
+                        child: Text('投 ${p.name}')))
+                    .toList(),
+              )
+            else
+              Text('你已投給 ${room.myVote}，投票不可更改。'),
+          ],
+          if (room.voteCounts != null && room.voteCounts!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('本輪投票結果',
+                style: TextStyle(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 6),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: candidates
-                  .map((p) => OutlinedButton(
-                      onPressed: () => state.werewolfVote(p.name),
-                      child: Text('投 ${p.name}')))
+              children: room.voteCounts!.entries
+                  .map((entry) => Chip(label: Text('${entry.key}：${entry.value} 票')))
                   .toList(),
-            ),
-          ],
-          if (isHost && room.phase == 'night') ...[
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: state.werewolfNextPhase,
-              icon: const Icon(Icons.wb_sunny_outlined),
-              label: const Text('直接進入白天'),
-            ),
-          ],
-          if (isHost && room.phase == 'day') ...[
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: state.werewolfNextPhase,
-              icon: const Icon(Icons.how_to_vote_rounded),
-              label: const Text('開始投票'),
-            ),
-          ],
-          if (isHost && room.phase == 'voting') ...[
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: state.werewolfNextPhase,
-              icon: const Icon(Icons.skip_next_rounded),
-              label: const Text('結束投票並進入下一輪'),
             ),
           ],
         ],
@@ -704,7 +802,7 @@ class _WerewolfActionCard extends StatelessWidget {
   }
 }
 
-class _WerewolfChatCard extends StatelessWidget {
+class _WerewolfChatCard extends StatefulWidget {
   final ThunderAppState state;
   final WerewolfRoomState room;
   final TextEditingController controller;
@@ -716,8 +814,32 @@ class _WerewolfChatCard extends StatelessWidget {
   });
 
   @override
+  State<_WerewolfChatCard> createState() => _WerewolfChatCardState();
+}
+
+class _WerewolfChatCardState extends State<_WerewolfChatCard> {
+  final ScrollController _scrollController = ScrollController();
+  int _lastMessageCount = -1;
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final messages = room.messages;
+    final messages = widget.room.messages;
+    if (_lastMessageCount != messages.length) {
+      _lastMessageCount = messages.length;
+      _scrollToBottom();
+    }
     return SectionCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -733,11 +855,12 @@ class _WerewolfChatCard extends StatelessWidget {
           SizedBox(
             height: 300,
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 final m = messages[index];
-                final mine = m.sender == state.username;
+                final mine = m.sender == widget.state.username;
                 final system = m.sender == '系統';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -777,26 +900,35 @@ class _WerewolfChatCard extends StatelessWidget {
               },
             ),
           ),
-          if (room.phase == 'day' || room.phase == 'voting')
+            if ((widget.room.phase == 'day' && widget.room.myTurn) ||
+              widget.room.phase == 'voting' ||
+              (widget.room.phase == 'night' &&
+                  widget.room.nightStep == 'wolf' &&
+                  widget.room.myRole == '狼人' &&
+                  widget.room.myAlive))
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: controller,
+                      controller: widget.controller,
                       onSubmitted: (value) {
-                        state.werewolfSpeak(value);
-                        controller.clear();
+                        widget.state.werewolfSpeak(value);
+                        widget.controller.clear();
                       },
-                      decoration: const InputDecoration(hintText: '說點什麼…'),
+                      decoration: InputDecoration(
+                        hintText: widget.room.phase == 'night'
+                            ? '只限狼隊的私密討論…'
+                            : '說點什麼…',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
                     onPressed: () {
-                      state.werewolfSpeak(controller.text);
-                      controller.clear();
+                      widget.state.werewolfSpeak(widget.controller.text);
+                      widget.controller.clear();
                     },
                     icon: const Icon(Icons.send_rounded),
                   ),
@@ -806,6 +938,12 @@ class _WerewolfChatCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }
 
@@ -1007,7 +1145,7 @@ class _TruthRoomView extends StatelessWidget {
   }
 }
 
-class _TruthChatCard extends StatelessWidget {
+class _TruthChatCard extends StatefulWidget {
   final ThunderAppState state;
   final TruthRoomState room;
   final TextEditingController controller;
@@ -1019,7 +1157,32 @@ class _TruthChatCard extends StatelessWidget {
   });
 
   @override
+  State<_TruthChatCard> createState() => _TruthChatCardState();
+}
+
+class _TruthChatCardState extends State<_TruthChatCard> {
+  final ScrollController _scrollController = ScrollController();
+  int _lastMessageCount = -1;
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final messages = widget.room.messages;
+    if (_lastMessageCount != messages.length) {
+      _lastMessageCount = messages.length;
+      _scrollToBottom();
+    }
     return SectionCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -1038,10 +1201,11 @@ class _TruthChatCard extends StatelessWidget {
             height: 260,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: room.messages.length,
+              controller: _scrollController,
+              itemCount: messages.length,
               itemBuilder: (context, index) {
-                final m = room.messages[index];
-                final mine = m.sender == state.username;
+                final m = messages[index];
+                final mine = m.sender == widget.state.username;
                 final system = m.sender == '系統';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -1095,10 +1259,10 @@ class _TruthChatCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: controller,
+                    controller: widget.controller,
                     onSubmitted: (value) {
-                      state.truthSpeak(value);
-                      controller.clear();
+                      widget.state.truthSpeak(value);
+                      widget.controller.clear();
                     },
                     decoration: const InputDecoration(hintText: '打字說話…'),
                   ),
@@ -1106,8 +1270,8 @@ class _TruthChatCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton.filled(
                   onPressed: () {
-                    state.truthSpeak(controller.text);
-                    controller.clear();
+                    widget.state.truthSpeak(widget.controller.text);
+                    widget.controller.clear();
                   },
                   icon: const Icon(Icons.send_rounded),
                 ),
@@ -1117,6 +1281,12 @@ class _TruthChatCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }
 
@@ -1136,6 +1306,9 @@ class _VoiceBar extends StatelessWidget {
     final inThisRoom = state.voice.active &&
         state.voice.roomType == roomType &&
         state.voice.roomId == roomId;
+    final isWaitingForTurn = roomType == 'werewolf' &&
+      state.werewolfRoom?.phase == 'day' &&
+      state.werewolfRoom?.myTurn != true;
 
     return SectionCard(
       child: Column(
@@ -1152,7 +1325,7 @@ class _VoiceBar extends StatelessWidget {
               if (inThisRoom)
                 IconButton(
                   tooltip: state.voice.muted ? '開麥克風' : '靜音',
-                  onPressed: state.toggleVoiceMute,
+                  onPressed: isWaitingForTurn ? null : state.toggleVoiceMute,
                   icon: Icon(
                     state.voice.muted
                         ? Icons.mic_off_rounded

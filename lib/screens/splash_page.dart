@@ -56,7 +56,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 28),
               Text(
-                '雷霆611',
+                '雷霆社群',
                 style: TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w900,

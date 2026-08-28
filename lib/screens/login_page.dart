@@ -68,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
             constraints: const BoxConstraints(maxWidth: 430),
             child: Column(
               children: [
-                Text('雷霆611', style: TextStyle(fontSize: 46, fontWeight: FontWeight.w900, letterSpacing: -1.5, color: primary)),
+                Text('雷霆社群', style: TextStyle(fontSize: 46, fontWeight: FontWeight.w900, letterSpacing: -1.5, color: primary)),
                 const SizedBox(height: 8),
                 Text(_register ? '建立帳號' : '登入', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 24),

@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="thunder_611"
+        android:label="雷霆社群"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
