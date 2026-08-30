@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Thunder_Community — a non-commercial community software project exploring Flutter, Dart, Node.js, WebSocket, SQLite, real-time communication and multiplayer systems.">
+<meta name="theme-color" content="#09080f">
+<title>Thunder_Community — Community Software Project</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+<header class="topbar">
+  <a class="brand" href="#top"><span class="brand-mark">611</span><span>THUNDER<span>611</span></span></a>
+  <nav class="nav"><a href="#about">About</a><a href="#architecture">Architecture</a><a href="#features">Features</a><a href="#stack">Tech Stack</a><a href="#roadmap">Roadmap</a></nav>
+  <button id="langToggle" class="ghost-btn" type="button">中文</button>
+</header>
+<main id="top">
+<section class="hero shell">
+  <div class="hero-copy reveal">
+    <div class="eyebrow"><span class="pulse"></span> NON-COMMERCIAL SOFTWARE PROJECT</div>
+    <h1>Build it.<br><em>Understand it.</em><br>Keep evolving.</h1>
+    <p class="lede">Thunder_Community is a class-community social platform built as a long-term software development project. It explores application architecture, real-time communication, databases, multiplayer systems, and mobile UI.</p>
+    <div class="hero-actions"><a class="primary-btn" href="https://github.com/littleban0305/Thunder_Community" target="_blank" rel="noreferrer">View source on GitHub</a><a class="secondary-btn" href="#architecture">See how it works</a></div>
+    <div class="hero-meta"><span>Dart</span><span>Flutter</span><span>Node.js</span><span>WebSocket</span><span>SQLite</span></div>
+  </div>
+  <div class="hero-art reveal delay-1">
+    <div class="orbit orbit-1"></div><div class="orbit orbit-2"></div>
+    <div class="device">
+      <div class="device-top"><span class="camera"></span><span class="device-title">Thunder_Community</span><span class="signal">●</span></div>
+      <div class="device-body">
+        <div class="mini-card accent"><div class="mini-label">REAL-TIME</div><div class="mini-value">ONLINE</div><div class="mini-sub">WebSocket connected</div></div>
+        <div class="mini-grid">
+          <div class="mini-card"><div class="mini-icon">CHAT</div><strong>Messages</strong><span>Private + rooms</span></div>
+          <div class="mini-card"><div class="mini-icon">VOICE</div><strong>Voice rooms</strong><span>Live participants</span></div>
+          <div class="mini-card"><div class="mini-icon">GAME</div><strong>Multiplayer</strong><span>Shared state</span></div>
+          <div class="mini-card"><div class="mini-icon">DATA</div><strong>SQLite</strong><span>Persistent data</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="floating-chip chip-a">Flutter Client</div><div class="floating-chip chip-b">Node.js Server</div><div class="floating-chip chip-c">SQLite</div>
+  </div>
+</section>
+<section id="about" class="section shell"><div class="section-heading"><span class="section-kicker">01 / ABOUT</span><h2>A real project, not a demo screen.</h2></div><div class="about-grid"><article class="glass-card"><p class="card-kicker">PROJECT GOAL</p><h3>Learn software development by building something people can actually use.</h3><p>Thunder_Community started as an experimental class-community social app and evolved into a multi-part system with a Flutter client, a Node.js backend, WebSocket synchronization, and SQLite persistence.</p><p>The project is non-commercial and intended for learning, personal development, and use by trusted classmates and friends.</p></article><div class="about-stack"><article class="stat-card"><span>APP</span><strong>Flutter + Dart</strong><p>Responsive UI for desktop and mobile.</p></article><article class="stat-card"><span>BACKEND</span><strong>Node.js</strong><p>HTTP APIs and real-time WebSocket events.</p></article><article class="stat-card"><span>DATA</span><strong>SQLite</strong><p>Accounts, messages, games, notifications, and more.</p></article></div></div></section>
+<section id="architecture" class="section shell"><div class="section-heading"><span class="section-kicker">02 / ARCHITECTURE</span><h2>One app, several layers.</h2></div><div class="architecture"><div class="arch-node client"><div class="arch-icon">01</div><div><span>CLIENT</span><strong>Flutter / Dart</strong></div><small>UI · state · media · voice</small></div><div class="connector"><span>HTTP / WSS</span></div><div class="arch-node server"><div class="arch-icon">02</div><div><span>BACKEND</span><strong>Node.js</strong></div><small>API · auth · sync · game logic</small></div><div class="connector"><span>SQL</span></div><div class="arch-node data"><div class="arch-icon">03</div><div><span>DATA</span><strong>SQLite</strong></div><small>users · rooms · history · inventory</small></div></div><div class="flow-note"><span class="flow-dot"></span><p><strong>Real-time first:</strong> chat, room presence, voice-room state, and multiplayer game state are designed to synchronize through WebSocket events instead of relying only on page refreshes.</p></div></section>
+<section id="features" class="section shell"><div class="section-heading"><span class="section-kicker">03 / FEATURES</span><h2>Built around real interactions.</h2></div><div class="feature-grid"><article class="feature-card"><span>A1</span><h3>Real-time chat</h3><p>Lobby, custom rooms, and private messages with synchronized state.</p></article><article class="feature-card"><span>A2</span><h3>Media messaging</h3><p>Images, videos, stickers, emoji, GIFs, and polls through the chat system.</p></article><article class="feature-card"><span>A3</span><h3>Voice rooms</h3><p>Each chat context has a corresponding voice room with live participant state.</p></article><article class="feature-card"><span>A4</span><h3>Multiplayer games</h3><p>Shared game state, turn flow, votes, roles, bots, and match results.</p></article><article class="feature-card"><span>A5</span><h3>Accounts & economy</h3><p>Profiles, avatars, coins, inventory, leaderboards, and game history.</p></article><article class="feature-card"><span>A6</span><h3>Administration</h3><p>Server-side permissions, account moderation, announcements, and content controls.</p></article></div></section>
+<section id="stack" class="section shell"><div class="section-heading"><span class="section-kicker">04 / TECH STACK</span><h2>What is actually inside?</h2></div><div class="stack-layout"><div class="stack-list"><div class="stack-row"><span class="stack-tag">DART</span><div><strong>Application logic</strong><p>Typed models, state management, async work, and UI behavior.</p></div></div><div class="stack-row"><span class="stack-tag">FLUTTER</span><div><strong>Cross-platform client</strong><p>Material UI, mobile navigation, desktop layouts, media, and animations.</p></div></div><div class="stack-row"><span class="stack-tag">NODE.JS</span><div><strong>Server runtime</strong><p>HTTP endpoints, WebSocket event routing, sessions, and multiplayer logic.</p></div></div><div class="stack-row"><span class="stack-tag">SQLITE</span><div><strong>Persistent storage</strong><p>Structured relational data with transaction handling and migrations.</p></div></div></div><aside class="code-card"><div class="code-top"><span></span><span></span><span></span><b>system-flow</b></div><pre><code>Flutter UI
+    │
+    ├── App State
+    │       │
+    │       ├── HTTP ────────┐
+    │       │                │
+    │       └── WebSocket ───┤
+    │                        ▼
+    │                  Node.js Server
+    │                        │
+    │                        ▼
+    │                     SQLite
+    │
+    └── Media / Voice services</code></pre></aside></div></section>
+<section id="roadmap" class="section shell"><div class="section-heading"><span class="section-kicker">05 / ROADMAP</span><h2>The project keeps evolving.</h2></div><div class="roadmap"><div class="road-item done"><span>NOW</span><div><strong>Core community platform</strong><p>Chat, rooms, profiles, moderation, games, voice, and synchronized data.</p></div></div><div class="road-item active"><span>NEXT</span><div><strong>Card battle system</strong><p>Collectible meme-inspired cards, card packs, decks, battles, rewards, and progression.</p></div></div><div class="road-item"><span>LATER</span><div><strong>More multiplayer experiences</strong><p>New games and social systems built on the same real-time backend.</p></div></div></div></section>
+<section class="cta shell"><div class="cta-box"><div><span class="section-kicker">SOURCE CODE</span><h2>Follow the project as it grows.</h2><p>Thunder_Community is developed openly on GitHub as a non-commercial learning-focused community software project.</p></div><a class="primary-btn" href="https://github.com/littleban0305/Thunder_Community" target="_blank" rel="noreferrer">Open GitHub</a></div></section>
+</main>
+<footer class="footer shell"><div><strong>THUNDER_COMMUNITY</strong><span>Non-commercial software development project</span></div><span>Built to learn. Built to ship.</span></footer>
+<script src="./script.js"></script>
+</body>
+</html>
