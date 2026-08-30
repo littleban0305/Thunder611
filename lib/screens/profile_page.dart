@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../services/backend_config.dart';
 import '../widgets/section_card.dart';
+import 'admin_page.dart';
 
 class ProfilePage extends StatelessWidget {
   final ThunderAppState state;
@@ -16,8 +17,28 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        const SliverAppBar.large(
-          title: Text('我的', style: TextStyle(fontWeight: FontWeight.w900)),
+        SliverAppBar.large(
+          title: const Text(
+            '我的',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          actions: [
+            if (state.isAdmin)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: IconButton.filledTonal(
+                  tooltip: '管理員後台',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AdminPage(state: state),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.admin_panel_settings_rounded),
+                ),
+              ),
+          ],
         ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
@@ -278,15 +299,17 @@ class ProfilePage extends StatelessWidget {
               child: const Text('取消')),
           FilledButton(
               onPressed: () {
-                if (nameController.text.trim().isNotEmpty)
+                if (nameController.text.trim().isNotEmpty) {
                   Navigator.pop(dialogContext, true);
+                }
               },
               child: const Text('儲存')),
         ],
       ),
     );
-    if (saved == true)
+    if (saved == true) {
       state.updateProfile(nameController.text, bioController.text);
+    }
     nameController.dispose();
     bioController.dispose();
   }

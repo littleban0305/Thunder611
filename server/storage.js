@@ -851,6 +851,36 @@ function setBanned(username, banned) {
   run('UPDATE users SET banned = ? WHERE username = ?', [banned ? 1 : 0, username]);
 }
 
+function deleteUser(username) {
+  const target = String(username || '').trim();
+  if (!target) throw new Error('成員名稱不能為空');
+
+  const existing = user(target);
+  if (!existing) throw new Error('找不到這位成員');
+  if (existing.role === 'admin') throw new Error('不能刪除管理員帳號');
+
+  return transaction(() => {
+    db.run('DELETE FROM private_messages WHERE sender = ? OR target = ?', [target, target]);
+    db.run('DELETE FROM lobby_messages WHERE sender = ?', [target]);
+    db.run('DELETE FROM transactions WHERE username = ?', [target]);
+    db.run('DELETE FROM daily_claims WHERE username = ?', [target]);
+    db.run('DELETE FROM friendships WHERE username = ? OR friend = ?', [target, target]);
+    db.run('DELETE FROM friend_requests WHERE sender = ? OR target = ?', [target, target]);
+    db.run('DELETE FROM game_history WHERE username = ?', [target]);
+    db.run('DELETE FROM notifications WHERE username = ?', [target]);
+    db.run('DELETE FROM memories WHERE uploader = ?', [target]);
+    db.run('DELETE FROM inventory WHERE username = ?', [target]);
+    db.run('DELETE FROM chat_room_messages WHERE sender = ?', [target]);
+    db.run('DELETE FROM chat_room_members WHERE username = ?', [target]);
+
+    db.run('DELETE FROM chat_rooms WHERE created_by = ?', [target]);
+
+    db.run('DELETE FROM users WHERE username = ?', [target]);
+
+    return { username: target };
+  });
+}
+
 function setAvatar(username, avatarUrl) {
   run('UPDATE users SET avatar_url = ? WHERE username = ?', [avatarUrl || '', username]);
 }
@@ -1120,6 +1150,7 @@ module.exports = {
   isAdmin,
   setAdmin,
   listUsers,
+  deleteUser,
   publicMembers,
   setBanned,
   setAvatar,

@@ -518,8 +518,9 @@ class HomePage extends StatelessWidget {
             onPressed: () {
               final amount = int.tryParse(controller.text.trim()) ?? 0;
               Navigator.pop(dialogContext);
-              if (amount > 0 && amount <= state.coins)
+              if (amount > 0 && amount <= state.coins) {
                 state.transferCoins(target, amount);
+              }
             },
             child: const Text('轉帳'),
           ),

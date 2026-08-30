@@ -31,13 +31,91 @@ class _AdminPageState extends State<AdminPage> {
         children: [
           const Text('帳號管理', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
-          SectionCard(padding: EdgeInsets.zero, child: Column(children: state.adminUsers.map((u) => ListTile(
-                title: Text('${u['username'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: Text('${u['coins'] ?? 0} 金幣 · ${u['wins'] ?? 0} 勝 · ${u['role'] ?? 'member'}'),
-                trailing: u['banned'] == true || u['banned'] == 1
-                    ? FilledButton.tonal(onPressed: () { state.adminUnban('${u['username']}'); state.loadAdminUsers(); }, child: const Text('解封'))
-                    : TextButton(onPressed: '${u['username']}' == state.username ? null : () { state.adminBan('${u['username']}'); state.loadAdminUsers(); }, child: const Text('封禁')),
-              )).toList())),
+          SectionCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: state.adminUsers.map((u) {
+                final target = '${u['username'] ?? ''}'.trim();
+                final banned = u['banned'] == true || u['banned'] == 1;
+                final isSelf = target == state.username;
+                final isAdminTarget = '${u['role'] ?? 'member'}' == 'admin';
+
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          target,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      if (isAdminTarget)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 6),
+                          child: Chip(
+                            label: Text('ADMIN'),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      if (banned)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 6),
+                          child: Chip(
+                            label: Text('已停權'),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                    ],
+                  ),
+                  subtitle: Text(
+                    '${u['coins'] ?? 0} 金幣 · ${u['wins'] ?? 0} 勝 · '
+                    '${u['role'] ?? 'member'}',
+                  ),
+                  trailing: Wrap(
+                    spacing: 2,
+                    children: [
+                      IconButton(
+                        tooltip: banned ? '解除停權' : '停權',
+                        onPressed: isSelf
+                            ? null
+                            : () async {
+                                if (banned) {
+                                  state.adminUnban(target);
+                                } else {
+                                  state.adminBan(target);
+                                }
+                                await Future<void>.delayed(
+                                  const Duration(milliseconds: 250),
+                                );
+                                widget.state.loadAdminUsers();
+                              },
+                        icon: Icon(
+                          banned
+                              ? Icons.lock_open_rounded
+                              : Icons.block_rounded,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: '刪除成員',
+                        onPressed: isSelf || isAdminTarget
+                            ? null
+                            : () => _confirmDeleteMember(
+                                  context,
+                                  target,
+                                ),
+                        color: Colors.redAccent,
+                        icon: const Icon(Icons.person_remove_rounded),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
           const SizedBox(height: 18),
           const Text('發布公告', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
@@ -63,6 +141,50 @@ class _AdminPageState extends State<AdminPage> {
               )),
         ],
       ),
+    );
+  }
+
+  Future<void> _confirmDeleteMember(
+    BuildContext context,
+    String username,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('刪除成員'),
+          content: Text(
+            '確定要永久刪除「$username」的帳號嗎？\n'
+            '此操作會移除帳號資料，且無法復原。',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('永久刪除'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    widget.state.adminDeleteMember(username);
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+
+    if (!mounted) return;
+    widget.state.loadAdminUsers();
+
+    // ignore: use_build_context_synchronously
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('已送出刪除「$username」的要求')),
     );
   }
 

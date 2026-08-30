@@ -684,41 +684,47 @@ class ThunderAppState extends ChangeNotifier {
       if (rawPrivatePeers is List) {
         for (final peer in rawPrivatePeers) {
           final name = '$peer'.trim();
-          if (name.isNotEmpty && name != username)
+          if (name.isNotEmpty && name != username) {
             privateMessages.putIfAbsent(name, () => []);
+          }
         }
       }
 
       _applyMembers(event['members']);
       final rawMemories = event['memories'];
-      if (rawMemories is List)
+      if (rawMemories is List) {
         memories = rawMemories
             .whereType<Map>()
             .map((e) => MemoryItem.fromJson(Map<String, dynamic>.from(e)))
             .toList();
+      }
       final rawAnnouncements = event['announcements'];
-      if (rawAnnouncements is List)
+      if (rawAnnouncements is List) {
         announcements = rawAnnouncements
             .whereType<Map>()
             .map((e) => AnnouncementItem.fromJson(Map<String, dynamic>.from(e)))
             .toList();
+      }
       final rawLeaderboard = event['leaderboard'];
-      if (rawLeaderboard is List)
+      if (rawLeaderboard is List) {
         leaderboard = rawLeaderboard
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
+      }
       final rawVoiceRooms = event['voiceRooms'];
-      if (rawVoiceRooms is List)
+      if (rawVoiceRooms is List) {
         voiceRooms = rawVoiceRooms
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
+      }
       _applyTransactions(event['transactions']);
       _applyGameHistory(event['gameHistory']);
-      if (event['werewolfStats'] is Map)
+      if (event['werewolfStats'] is Map) {
         werewolfStats =
             Map<String, dynamic>.from(event['werewolfStats'] as Map);
+      }
       chatCount = (event['chatCount'] as num?)?.toInt() ?? chatCount;
       _applySocial(event);
       loadCommunityData();
@@ -729,21 +735,23 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'memories') {
       final raw = event['memories'];
-      if (raw is List)
+      if (raw is List) {
         memories = raw
             .whereType<Map>()
             .map((e) => MemoryItem.fromJson(Map<String, dynamic>.from(e)))
             .toList();
+      }
       notifyListeners();
       return;
     }
     if (type == 'memory.added') {
       final raw = event['memory'];
-      if (raw is Map)
+      if (raw is Map) {
         memories = [
           MemoryItem.fromJson(Map<String, dynamic>.from(raw)),
           ...memories
         ];
+      }
       notifyListeners();
       return;
     }
@@ -771,11 +779,12 @@ class ThunderAppState extends ChangeNotifier {
     }
     if (type == 'chat.rooms') {
       final raw = event['rooms'];
-      if (raw is List)
+      if (raw is List) {
         chatRooms = raw
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
+      }
       notifyListeners();
       return;
     }
@@ -820,7 +829,9 @@ class ThunderAppState extends ChangeNotifier {
       final roomId = '${event['roomId'] ?? ''}';
       channelMessages.remove(roomId);
       channelVoiceUsers.remove(roomId);
-      if (_activeChatRoomId == roomId) _activeChatRoomId = null;
+      if (_activeChatRoomId == roomId) {
+        _activeChatRoomId = null;
+      }
       chatRooms = chatRooms
           .map((room) => room['id']?.toString() == roomId
               ? {...room, 'joined': false}
@@ -845,13 +856,17 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'chat.room.message') {
       final roomId = '${event['roomId'] ?? ''}';
-      if (roomId.isEmpty) return;
+      if (roomId.isEmpty) {
+        return;
+      }
       final rawPayload = event['payload'];
       final payload = rawPayload is Map
           ? Map<String, dynamic>.from(rawPayload)
           : <String, dynamic>{};
       final id = (event['id'] as num?)?.toInt();
-      if (id != null) payload['id'] = id;
+      if (id != null) {
+        payload['id'] = id;
+      }
       final message = ChatMessage(
           sender: '${event['sender'] ?? ''}',
           text: '${event['text'] ?? ''}',
@@ -861,7 +876,9 @@ class ThunderAppState extends ChangeNotifier {
           payload: payload);
       final list = channelMessages.putIfAbsent(roomId, () => []);
       if (message.clientId == null ||
-          !list.any((m) => m.clientId == message.clientId)) list.add(message);
+          !list.any((m) => m.clientId == message.clientId)) {
+        list.add(message);
+      }
       notifyListeners();
       return;
     }
@@ -870,7 +887,9 @@ class ThunderAppState extends ChangeNotifier {
         type == 'chat.room.message.updated' ||
         type == 'private.message.updated') {
       final id = (event['id'] as num?)?.toInt();
-      if (id == null) return;
+      if (id == null) {
+        return;
+      }
       final newText = '${event['text'] ?? ''}';
       final payload = event['payload'] is Map
           ? Map<String, dynamic>.from(event['payload'] as Map)
@@ -887,13 +906,17 @@ class ThunderAppState extends ChangeNotifier {
       if (type == 'chat.message.updated') {
         final i = chatMessages
             .indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
-        if (i >= 0) chatMessages[i] = replace(chatMessages[i]);
+        if (i >= 0) {
+          chatMessages[i] = replace(chatMessages[i]);
+        }
       } else if (type == 'private.message.updated') {
         for (final key in privateMessages.keys.toList()) {
           final list = privateMessages[key]!;
           final i =
               list.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
-          if (i >= 0) list[i] = replace(list[i]);
+          if (i >= 0) {
+            list[i] = replace(list[i]);
+          }
         }
       } else {
         final roomId = '${event['roomId'] ?? ''}';
@@ -901,7 +924,9 @@ class ThunderAppState extends ChangeNotifier {
         if (list != null) {
           final i =
               list.indexWhere((m) => (m.payload['id'] as num?)?.toInt() == id);
-          if (i >= 0) list[i] = replace(list[i]);
+          if (i >= 0) {
+            list[i] = replace(list[i]);
+          }
         }
       }
       notifyListeners();
@@ -912,7 +937,9 @@ class ThunderAppState extends ChangeNotifier {
         type == 'chat.room.message.deleted' ||
         type == 'private.message.deleted') {
       final id = (event['id'] as num?)?.toInt();
-      if (id == null) return;
+      if (id == null) {
+        return;
+      }
       if (type == 'chat.message.deleted') {
         chatMessages = chatMessages
             .where((m) => (m.payload['id'] as num?)?.toInt() != id)
@@ -926,10 +953,11 @@ class ThunderAppState extends ChangeNotifier {
       } else {
         final roomId = '${event['roomId'] ?? ''}';
         final list = channelMessages[roomId];
-        if (list != null)
+        if (list != null) {
           channelMessages[roomId] = list
               .where((m) => (m.payload['id'] as num?)?.toInt() != id)
               .toList();
+        }
       }
       notifyListeners();
       return;
@@ -978,11 +1006,12 @@ class ThunderAppState extends ChangeNotifier {
     }
     if (type == 'admin.users') {
       final raw = event['users'];
-      if (raw is List)
+      if (raw is List) {
         adminUsers = raw
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
+      }
       notifyListeners();
       return;
     }
@@ -1003,7 +1032,9 @@ class ThunderAppState extends ChangeNotifier {
     if (type == 'member.balance') {
       final name = '${event['username'] ?? ''}';
       final amount = (event['coins'] as num?)?.toInt();
-      if (amount == null) return;
+      if (amount == null) {
+        return;
+      }
       members = members.map((member) {
         if (member.name != name) return member;
         return Member(
@@ -1024,7 +1055,9 @@ class ThunderAppState extends ChangeNotifier {
           ? Map<String, dynamic>.from(rawPayload)
           : <String, dynamic>{};
       final id = (event['id'] as num?)?.toInt();
-      if (id != null) payload['id'] = id;
+      if (id != null) {
+        payload['id'] = id;
+      }
       final message = ChatMessage(
         sender: '${event['sender'] ?? ''}',
         text: '${event['text'] ?? ''}',
@@ -1047,7 +1080,9 @@ class ThunderAppState extends ChangeNotifier {
       final sender = '${event['sender'] ?? ''}';
       final target = '${event['target'] ?? ''}';
       final peer = sender == username ? target : sender;
-      if (peer.isEmpty) return;
+      if (peer.isEmpty) {
+        return;
+      }
       final message = ChatMessage(
         sender: sender,
         text: '${event['text'] ?? ''}',
@@ -1147,21 +1182,23 @@ class ThunderAppState extends ChangeNotifier {
 
     if (type == 'leaderboard') {
       final raw = event['members'];
-      if (raw is List)
+      if (raw is List) {
         leaderboard = raw
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
+      }
       notifyListeners();
       return;
     }
     if (type == 'announcements') {
       final raw = event['announcements'];
-      if (raw is List)
+      if (raw is List) {
         announcements = raw
             .whereType<Map>()
             .map((e) => AnnouncementItem.fromJson(Map<String, dynamic>.from(e)))
             .toList();
+      }
       notifyListeners();
       return;
     }
@@ -1172,11 +1209,12 @@ class ThunderAppState extends ChangeNotifier {
     }
     if (type == 'voice.rooms') {
       final raw = event['rooms'];
-      if (raw is List)
+      if (raw is List) {
         voiceRooms = raw
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
+      }
       notifyListeners();
       return;
     }
@@ -1471,7 +1509,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void _applyMembers(dynamic raw) {
-    if (raw is! List) return;
+    if (raw is! List) {
+      return;
+    }
     members = raw
         .whereType<Map>()
         .map((e) => Member(
@@ -1497,7 +1537,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void _applyProfile(dynamic raw) {
-    if (raw is! Map) return;
+    if (raw is! Map) {
+      return;
+    }
     coins = (raw['coins'] as num?)?.toInt() ?? coins;
     wins = (raw['wins'] as num?)?.toInt() ?? wins;
     avatarUrl = '${raw['avatarUrl'] ?? avatarUrl}';
@@ -1606,16 +1648,21 @@ class ThunderAppState extends ChangeNotifier {
       (r) => '${r['id']}' == roomId,
       orElse: () => <String, dynamic>{},
     );
-    if (room.isEmpty || room['joined'] != true) return;
+    if (room.isEmpty || room['joined'] != true) {
+      return;
+    }
     _activePrivateTarget = null;
     _activeChatRoomId = roomId;
-    if (realtimeConnected)
+    if (realtimeConnected) {
       realtime.send({'type': 'chat.room.history', 'roomId': roomId});
+    }
     notifyListeners();
   }
 
   void createChatRoom(String name, {bool isPublic = true}) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({
       'type': 'chat.room.create',
       'name': name.trim(),
@@ -1625,14 +1672,17 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void joinChatRoom(String roomId) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send(
         {'type': 'chat.room.join', 'roomId': roomId, 'requestId': _clientId()});
   }
 
   Future<void> leaveChatRoom(String roomId) async {
-    if (voice.active && voice.roomType == 'channel' && voice.roomId == roomId)
+    if (voice.active && voice.roomType == 'channel' && voice.roomId == roomId) {
       await stopVoice();
+    }
     if (realtimeConnected) {
       realtime.send({'type': 'chat.room.leave', 'roomId': roomId});
     } else {
@@ -1642,14 +1692,18 @@ class ThunderAppState extends ChangeNotifier {
               : room)
           .toList();
       channelMessages.remove(roomId);
-      if (_activeChatRoomId == roomId) _activeChatRoomId = null;
+      if (_activeChatRoomId == roomId) {
+        _activeChatRoomId = null;
+      }
       notifyListeners();
     }
   }
 
   void sendChatRoom(String roomId, String text) {
     final trimmed = text.trim();
-    if (!realtimeConnected || trimmed.isEmpty) return;
+    if (!realtimeConnected || trimmed.isEmpty) {
+      return;
+    }
     realtime.send({
       'type': 'chat.room.send',
       'roomId': roomId,
@@ -1664,9 +1718,13 @@ class ThunderAppState extends ChangeNotifier {
       required String text,
       String? roomId,
       String? target}) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     final clean = text.trim();
-    if (clean.isEmpty) return;
+    if (clean.isEmpty) {
+      return;
+    }
     if (scope == 'lobby') {
       realtime
           .send({'type': 'chat.edit', 'messageId': messageId, 'text': clean});
@@ -1692,7 +1750,9 @@ class ThunderAppState extends ChangeNotifier {
       required int messageId,
       String? roomId,
       String? target}) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     if (scope == 'lobby') {
       realtime.send({'type': 'chat.delete', 'messageId': messageId});
     } else if (scope == 'room') {
@@ -1716,7 +1776,9 @@ class ThunderAppState extends ChangeNotifier {
   void sendLobby(String text) {
     _activePrivateTarget = null;
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty) {
+      return;
+    }
     final clientId = _clientId();
     if (realtimeConnected) {
       realtime.send({
@@ -1738,7 +1800,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void openPrivate(String target) {
-    if (target.trim().isEmpty || target == username) return;
+    if (target.trim().isEmpty || target == username) {
+      return;
+    }
     _activePrivateTarget = target;
     _activeChatRoomId = null;
     privateMessages.putIfAbsent(target, () => []);
@@ -1750,9 +1814,13 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void sendPrivate(String target, String text) {
-    if (target.trim().isEmpty || target == username) return;
+    if (target.trim().isEmpty || target == username) {
+      return;
+    }
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty) {
+      return;
+    }
     final clientId = _clientId();
 
     if (realtimeConnected) {
@@ -1808,7 +1876,9 @@ class ThunderAppState extends ChangeNotifier {
     }
     try {
       final token = await store.currentToken();
-      if (token == null || token.isEmpty) throw Exception('登入已失效，請重新登入');
+      if (token == null || token.isEmpty) {
+        throw Exception('登入已失效，請重新登入');
+      }
       final response = await http
           .post(
             Uri.parse('${BackendConfig.httpBaseUrl}/api/upload'),
@@ -1989,7 +2059,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void createPoll(String question, List<String> options) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({
       'type': 'chat.send',
       'kind': 'poll',
@@ -2000,7 +2072,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void votePoll(int messageId, int option) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime
         .send({'type': 'poll.vote', 'messageId': messageId, 'option': option});
   }
@@ -2009,12 +2083,16 @@ class ThunderAppState extends ChangeNotifier {
       {required String dataBase64, required String ext}) async {
     final url =
         await _uploadMedia(kind: 'avatar', dataBase64: dataBase64, ext: ext);
-    if (url == null || !realtimeConnected) return;
+    if (url == null || !realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'profile.avatar.upload', 'url': url});
   }
 
   void loadMemories() {
-    if (realtimeConnected) realtime.send({'type': 'memory.list'});
+    if (realtimeConnected) {
+      realtime.send({'type': 'memory.list'});
+    }
   }
 
   Future<void> addMemory(
@@ -2024,59 +2102,89 @@ class ThunderAppState extends ChangeNotifier {
       String caption = ''}) async {
     final url =
         await _uploadMedia(kind: 'memory', dataBase64: dataBase64, ext: ext);
-    if (url == null || !realtimeConnected) return;
+    if (url == null || !realtimeConnected) {
+      return;
+    }
     realtime.send(
         {'type': 'memory.add', 'kind': kind, 'url': url, 'caption': caption});
   }
 
   void loadAdminUsers() {
-    if (realtimeConnected && isAdmin) realtime.send({'type': 'admin.users'});
+    if (realtimeConnected && isAdmin) {
+      realtime.send({'type': 'admin.users'});
+    }
   }
 
   void adminBan(String target) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send({'type': 'admin.ban', 'target': target});
+    }
+  }
+
+  void adminDeleteMember(String target) {
+    final cleanTarget = target.trim();
+    if (cleanTarget.isEmpty || cleanTarget == username) {
+      lastActionError = cleanTarget == username
+          ? '不能刪除自己的帳號'
+          : '成員名稱不能為空';
+      notifyListeners();
+      return;
+    }
+
+    if (realtimeConnected && isAdmin) {
+      realtime.send({
+        'type': 'admin.deleteUser',
+        'target': cleanTarget,
+      });
+    }
   }
 
   void adminUnban(String target) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send({'type': 'admin.unban', 'target': target});
+    }
   }
 
   void adminCreateAnnouncement(String title, String body) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send(
           {'type': 'admin.announcement.create', 'title': title, 'body': body});
+    }
   }
 
   void adminDeleteAnnouncement(int id) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send({'type': 'admin.announcement.delete', 'id': id});
+    }
   }
 
   void adminDeleteMemory(int id) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send({'type': 'admin.memory.delete', 'id': id});
+    }
   }
 
   void adminUpsertVoice(String id, String name, bool locked) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send({
         'type': 'admin.voice.upsert',
         'id': id,
         'name': name,
         'locked': locked
       });
+    }
   }
 
   void adminDeleteVoice(String id) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send({'type': 'admin.voice.delete', 'id': id});
+    }
   }
 
   void adminLockVoice(String id, bool locked) {
-    if (realtimeConnected && isAdmin)
+    if (realtimeConnected && isAdmin) {
       realtime.send({'type': 'admin.voice.lock', 'id': id, 'locked': locked});
+    }
   }
 
   String _notificationText(SocialNotification n) {
@@ -2091,8 +2199,12 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void setCosmetics({String? title, String? frame}) {
-    if (title != null) selectedTitle = title;
-    if (frame != null) selectedFrame = frame;
+    if (title != null) {
+      selectedTitle = title;
+    }
+    if (frame != null) {
+      selectedFrame = frame;
+    }
     _persist();
     notifyListeners();
   }
@@ -2116,39 +2228,55 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void refreshSocial() {
-    if (realtimeConnected) realtime.send({'type': 'social.refresh'});
+    if (realtimeConnected) {
+      realtime.send({'type': 'social.refresh'});
+    }
   }
 
   void sendFriendRequest(String target) {
-    if (!realtimeConnected || target.trim().isEmpty || target == username) return;
+    if (!realtimeConnected || target.trim().isEmpty || target == username) {
+      return;
+    }
     realtime.send({'type': 'friend.request', 'target': target});
   }
 
   void respondFriendRequest(int requestId, bool accept) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send(
         {'type': 'friend.respond', 'requestId': requestId, 'accept': accept});
   }
 
   void removeFriend(String target) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'friend.remove', 'target': target});
   }
 
   void transferCoins(String target, int amount) {
-    if (!realtimeConnected || target.trim().isEmpty || target == username || amount <= 0) return;
+    if (!realtimeConnected || target.trim().isEmpty || target == username || amount <= 0) {
+      return;
+    }
     realtime
         .send({'type': 'wallet.transfer', 'target': target, 'amount': amount});
   }
 
   void stealCoins(String target) {
-    if (!realtimeConnected || target.trim().isEmpty || target == username) return;
+    if (!realtimeConnected || target.trim().isEmpty || target == username) {
+      return;
+    }
     realtime.send({'type': 'wallet.steal', 'target': target});
   }
 
   void useItem(String itemId, {String? target}) {
-    if (!realtimeConnected) return;
-    if (itemBusy.contains(itemId)) return;
+    if (!realtimeConnected) {
+      return;
+    }
+    if (itemBusy.contains(itemId)) {
+      return;
+    }
     itemBusy.add(itemId);
     notifyListeners();
     realtime.send({
@@ -2159,7 +2287,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void inviteToWerewolf(String target) {
-    if (!realtimeConnected || werewolfRoom == null) return;
+    if (!realtimeConnected || werewolfRoom == null) {
+      return;
+    }
     realtime.send({
       'type': 'werewolf.invite',
       'target': target,
@@ -2168,12 +2298,16 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void listWerewolfRooms() {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'werewolf.list'});
   }
 
   void createWerewolfRoom({int maxPlayers = 8, int botCount = 0}) {
-    if (!realtimeConnected || werewolfBusy) return;
+    if (!realtimeConnected || werewolfBusy) {
+      return;
+    }
     werewolfBusy = true;
     lastActionError = null;
     notifyListeners();
@@ -2186,7 +2320,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void joinWerewolfRoom(String roomId) {
-    if (!realtimeConnected || werewolfBusy) return;
+    if (!realtimeConnected || werewolfBusy) {
+      return;
+    }
     werewolfBusy = true;
     lastActionError = null;
     notifyListeners();
@@ -2204,12 +2340,16 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void startWerewolf() {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'werewolf.start'});
   }
 
   void werewolfSpeak(String text) {
-    if (!realtimeConnected || text.trim().isEmpty) return;
+    if (!realtimeConnected || text.trim().isEmpty) {
+      return;
+    }
     realtime.send({'type': 'werewolf.speak', 'text': text.trim()});
   }
 
@@ -2219,12 +2359,16 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void werewolfNight(String target) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'werewolf.night', 'target': target});
   }
 
   void werewolfWitch(String action, {String? target}) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({
       'type': 'werewolf.witch',
       'action': action,
@@ -2235,14 +2379,18 @@ class ThunderAppState extends ChangeNotifier {
   void werewolfVote(String target) {
     if (!realtimeConnected ||
         werewolfVotePending ||
-        werewolfRoom?.myVote != null) return;
+        werewolfRoom?.myVote != null) {
+      return;
+    }
     werewolfVotePending = true;
     notifyListeners();
     realtime.send({'type': 'werewolf.vote', 'target': target});
   }
 
   void werewolfHunter(String target) {
-    if (!realtimeConnected || !werewolfHunterAvailable) return;
+    if (!realtimeConnected || !werewolfHunterAvailable) {
+      return;
+    }
     realtime.send({'type': 'werewolf.hunter', 'target': target});
     werewolfHunterAvailable = false;
     werewolfHunterTargets = const [];
@@ -2250,12 +2398,16 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void werewolfNextPhase() {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'werewolf.day_next'});
   }
 
   void loadCommunityData() {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'leaderboard.list'});
     realtime.send({'type': 'announcements.list'});
     realtime.send({'type': 'game.history'});
@@ -2263,7 +2415,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void joinGlobalVoice(String roomId) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     if (roomId == 'lobby') {
       toggleVoice('channel', 'lobby');
       return;
@@ -2272,14 +2426,18 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void joinChannelVoice(String roomId) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     toggleVoice('channel', roomId);
   }
 
   int get unreadNotificationCount => notifications.where((n) => !n.read).length;
 
   void markNotificationsRead() {
-    if (realtimeConnected) realtime.send({'type': 'notifications.read'});
+    if (realtimeConnected) {
+      realtime.send({'type': 'notifications.read'});
+    }
     notifications = notifications
         .map((n) => SocialNotification(
             id: n.id,
@@ -2292,12 +2450,16 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void listTruthRooms() {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'truth.list'});
   }
 
   void createTruthRoom({int maxPlayers = 8}) {
-    if (!realtimeConnected || truthBusy) return;
+    if (!realtimeConnected || truthBusy) {
+      return;
+    }
     truthBusy = true;
     lastActionError = null;
     notifyListeners();
@@ -2309,7 +2471,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void joinTruthRoom(String roomId) {
-    if (!realtimeConnected || truthBusy) return;
+    if (!realtimeConnected || truthBusy) {
+      return;
+    }
     truthBusy = true;
     lastActionError = null;
     notifyListeners();
@@ -2331,27 +2495,37 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void drawTruthPlayer() {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'truth.draw'});
   }
 
   void chooseTruth(String choice) {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'truth.choose', 'choice': choice});
   }
 
   void finishTruthRound() {
-    if (!realtimeConnected) return;
+    if (!realtimeConnected) {
+      return;
+    }
     realtime.send({'type': 'truth.finish'});
   }
 
   void truthSpeak(String text) {
-    if (!realtimeConnected || text.trim().isEmpty) return;
+    if (!realtimeConnected || text.trim().isEmpty) {
+      return;
+    }
     realtime.send({'type': 'truth.speak', 'text': text.trim()});
   }
 
   void inviteToTruth(String target) {
-    if (!realtimeConnected || truthRoom == null) return;
+    if (!realtimeConnected || truthRoom == null) {
+      return;
+    }
     realtime.send({
       'type': 'truth.invite',
       'target': target,
@@ -2399,7 +2573,9 @@ class ThunderAppState extends ChangeNotifier {
   }
 
   void toggleVoiceMute() {
-    if (!voice.active) return;
+    if (!voice.active) {
+      return;
+    }
     voice.setMuted(realtime, !voice.muted);
     notifyListeners();
   }
@@ -2422,7 +2598,9 @@ class ThunderAppState extends ChangeNotifier {
     }
 
     coins += reward;
-    if (gameId == 'werewolf') wins += 1;
+    if (gameId == 'werewolf') {
+      wins += 1;
+    }
     _syncBalanceOffline();
   }
 

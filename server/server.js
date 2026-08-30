@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const storage = require('./storage');
 
 const PORT = Number(process.env.PORT || 6110);
-const SERVER_VERSION = '1.1.3';
+const SERVER_VERSION = '1.1.5';
 const path = require('path');
 const fs = require('fs');
 const DATA_DIR = path.join(__dirname, 'data');
@@ -2063,6 +2063,58 @@ wss.on('connection', (ws) => {
         if (bannedSocket && bannedSocket.readyState === WebSocket.OPEN) bannedSocket.close(4003, 'banned');
         ws.send(JSON.stringify({ type: 'admin.result', action: 'ban', ok: true, target }));
       } catch (error) { ws.send(JSON.stringify({ type: 'action.error', action: 'admin', error: error.message })); }
+      return;
+    }
+    if (type === 'admin.deleteUser') {
+      try {
+        if (!user.isAdmin) throw new Error('需要管理員權限');
+
+        const target = String(event.target || '').trim();
+        if (!target) throw new Error('成員名稱不能為空');
+        if (target === user.username) throw new Error('不能刪除自己的帳號');
+
+        const targetUser = storage.user(target);
+        if (!targetUser) throw new Error('找不到這位成員');
+        if (targetUser.role === 'admin') throw new Error('不能刪除管理員帳號');
+
+        const deleted = storage.deleteUser(target);
+
+        const targetSocket = [...online.entries()]
+          .find(([, item]) => item.username === target)?.[0];
+
+        if (targetSocket && targetSocket.readyState === WebSocket.OPEN) {
+          targetSocket.close(4004, 'account_deleted');
+        }
+
+        for (const [socket, item] of online.entries()) {
+          if (item.username === target) {
+            online.delete(socket);
+          }
+        }
+
+        for (const [socket, item] of sessions.entries()) {
+          if (item.username === target) {
+            sessions.delete(socket);
+          }
+        }
+
+        ws.send(JSON.stringify({
+          type: 'admin.result',
+          action: 'deleteUser',
+          ok: true,
+          target: deleted.username,
+        }));
+        broadcast({
+          type: 'members',
+          members: storage.publicMembers(200),
+        });
+      } catch (error) {
+        ws.send(JSON.stringify({
+          type: 'action.error',
+          action: 'admin',
+          error: error.message,
+        }));
+      }
       return;
     }
     if (type === 'admin.unban') {
